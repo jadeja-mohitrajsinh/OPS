@@ -197,8 +197,20 @@ export default function CalendarPlanningPage() {
     setSelectedDate(todayStr);
   };
 
+  const goToPrevDay = () => {
+    const d = new Date(selectedDate + 'T00:00:00');
+    d.setDate(d.getDate() - 1);
+    setSelectedDate(formatDate(d.getFullYear(), d.getMonth(), d.getDate()));
+  };
+
+  const goToNextDay = () => {
+    const d = new Date(selectedDate + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    setSelectedDate(formatDate(d.getFullYear(), d.getMonth(), d.getDate()));
+  };
+
   // ── Week Calculations ───────────────────────────────────────────────────────
-  const selectedDateObj = new Date(selectedDate);
+  const selectedDateObj = new Date(selectedDate + 'T00:00:00');
   const dayOfWeek = selectedDateObj.getDay(); // 0 is Sun
   const startOfWeek = new Date(selectedDateObj);
   startOfWeek.setDate(selectedDateObj.getDate() - dayOfWeek);
@@ -234,7 +246,7 @@ export default function CalendarPlanningPage() {
 
   return (
     <AppShell>
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 16px 90px 16px' }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 16px 100px 16px' }}>
 
         {/* ── HEADER & NAVIGATION CONTROLS ────────────────────────────────────── */}
         <div style={{
@@ -409,23 +421,24 @@ export default function CalendarPlanningPage() {
               background: 'var(--surface)',
               border: '1px solid var(--border)',
               borderRadius: 16,
-              padding: 16,
+              padding: '16px 12px',
               boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+              overflowX: 'auto',
             }}>
               {/* Day Labels */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginBottom: 8, textAlign: 'center' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(36px, 1fr))', gap: 4, marginBottom: 8, textAlign: 'center' }}>
                 {DAY_LABELS.map(day => (
-                  <div key={day} style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  <div key={day} style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                     {day}
                   </div>
                 ))}
               </div>
 
               {/* Day Cells */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(36px, 1fr))', gap: 4 }}>
                 {calendarDays.map((dateStr, idx) => {
                   if (!dateStr) {
-                    return <div key={`empty_${idx}`} style={{ minHeight: 80, opacity: 0.2 }} />;
+                    return <div key={`empty_${idx}`} style={{ minHeight: 74, opacity: 0.15 }} />;
                   }
 
                   const dayNum = parseInt(dateStr.split('-')[2], 10);
@@ -441,9 +454,9 @@ export default function CalendarPlanningPage() {
                         setShowDayInspector(true);
                       }}
                       style={{
-                        minHeight: 84,
-                        padding: '6px 8px',
-                        borderRadius: 12,
+                        minHeight: 74,
+                        padding: '4px 6px',
+                        borderRadius: 10,
                         border: isSelected
                           ? '2px solid var(--blue)'
                           : isToday
@@ -464,40 +477,40 @@ export default function CalendarPlanningPage() {
                       {/* Top: Day number + Today indicator */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span style={{
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: isToday || isSelected ? 900 : 700,
                           color: isToday ? 'var(--purple)' : 'var(--text)',
                         }}>
                           {dayNum}
                         </span>
                         {isToday && (
-                          <span style={{ fontSize: 9, fontWeight: 900, background: 'var(--purple)', color: '#fff', padding: '1px 4px', borderRadius: 4 }}>
+                          <span style={{ fontSize: 8, fontWeight: 900, background: 'var(--purple)', color: '#fff', padding: '1px 3px', borderRadius: 3 }}>
                             TODAY
                           </span>
                         )}
                       </div>
 
                       {/* Middle: Workload metrics */}
-                      <div style={{ marginTop: 4 }}>
+                      <div style={{ marginTop: 2, overflow: 'hidden' }}>
                         {workload.totalHours > 0 ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <div style={{ fontSize: 11, fontWeight: 800, color: workload.statusColor }}>
-                              {workload.totalHours}h planned
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            <div style={{ fontSize: 10, fontWeight: 800, color: workload.statusColor, whiteSpace: 'nowrap' }}>
+                              {workload.totalHours}h
                             </div>
-                            <div style={{ display: 'flex', gap: 4, fontSize: 10, color: 'var(--text-muted)' }}>
+                            <div style={{ display: 'flex', gap: 3, fontSize: 9, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                               {workload.meetingCount > 0 && <span>{workload.meetingCount}👥</span>}
                               {workload.taskCount > 0 && <span>{workload.taskCount}✓</span>}
                             </div>
                           </div>
                         ) : (
-                          <div style={{ fontSize: 10, color: 'var(--text-muted)', opacity: 0.5 }}>
+                          <div style={{ fontSize: 9, color: 'var(--text-muted)', opacity: 0.4 }}>
                             Free
                           </div>
                         )}
                       </div>
 
                       {/* Bottom: Capacity load progress bar */}
-                      <div style={{ width: '100%', height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden', marginTop: 4 }}>
+                      <div style={{ width: '100%', height: 3, background: 'var(--border)', borderRadius: 2, overflow: 'hidden', marginTop: 2 }}>
                         <div style={{
                           width: `${workload.loadPercentage}%`,
                           height: '100%',
@@ -530,7 +543,7 @@ export default function CalendarPlanningPage() {
                 <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)', marginTop: 2 }}>
                   {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 800, color: selectedWorkload.statusColor }}>
                     {selectedWorkload.totalHours}h planned
                   </span>
@@ -543,7 +556,7 @@ export default function CalendarPlanningPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {selectedDate === todayStr ? (
                   <Link
                     href="/today"
@@ -696,43 +709,49 @@ export default function CalendarPlanningPage() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {upcomingMeetingsList.map(m => (
-                  <div
-                    key={m._id}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: 10,
-                      background: 'var(--surface-2)',
-                      border: '1px solid var(--border)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 4,
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>{m.title}</span>
-                      <span style={{ fontSize: 11, color: '#2563eb', fontWeight: 700 }}>{m.date?.slice(0, 10)} {fmt12(m.time)}</span>
+                {upcomingMeetingsList.length > 0 ? (
+                  upcomingMeetingsList.map(m => (
+                    <div
+                      key={m._id}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 10,
+                        background: 'var(--surface-2)',
+                        border: '1px solid var(--border)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 4,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>{m.title}</span>
+                        <span style={{ fontSize: 11, color: '#2563eb', fontWeight: 700 }}>{m.date?.slice(0, 10)} {fmt12(m.time)}</span>
+                      </div>
+                      {m.notes && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.notes}</div>}
+                      {m.link && (
+                        <a
+                          href={m.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: '#2563eb',
+                            textDecoration: 'none',
+                            alignSelf: 'flex-start',
+                            marginTop: 4,
+                          }}
+                        >
+                          Join Call →
+                        </a>
+                      )}
                     </div>
-                    {m.notes && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.notes}</div>}
-                    {m.link && (
-                      <a
-                        href={m.link}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          color: '#2563eb',
-                          textDecoration: 'none',
-                          alignSelf: 'flex-start',
-                          marginTop: 4,
-                        }}
-                      >
-                        Join Call →
-                      </a>
-                    )}
+                  ))
+                ) : (
+                  <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                    🎉 No upcoming meetings scheduled!
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -749,41 +768,47 @@ export default function CalendarPlanningPage() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {upcomingDeadlines.map(t => (
-                  <div
-                    key={t._id}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: 10,
-                      background: 'var(--surface-2)',
-                      border: '1px solid var(--border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 10,
-                    }}
-                  >
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {t.title}
+                {upcomingDeadlines.length > 0 ? (
+                  upcomingDeadlines.map(t => (
+                    <div
+                      key={t._id}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 10,
+                        background: 'var(--surface-2)',
+                        border: '1px solid var(--border)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                      }}
+                    >
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {t.title}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                          {t.project || 'General'} • Priority: {t.priority || 'P2'}
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                        {t.project || 'General'} • Priority: {t.priority || 'P2'}
-                      </div>
+                      <span style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        padding: '3px 8px',
+                        borderRadius: 6,
+                        background: t.deadline?.slice(0, 10) === todayStr ? 'rgba(239,68,68,0.12)' : 'var(--surface)',
+                        color: t.deadline?.slice(0, 10) === todayStr ? '#ef4444' : 'var(--text-secondary)',
+                        flexShrink: 0,
+                      }}>
+                        {t.deadline?.slice(0, 10)}
+                      </span>
                     </div>
-                    <span style={{
-                      fontSize: 11,
-                      fontWeight: 800,
-                      padding: '3px 8px',
-                      borderRadius: 6,
-                      background: t.deadline?.slice(0, 10) === todayStr ? 'rgba(239,68,68,0.12)' : 'var(--surface)',
-                      color: t.deadline?.slice(0, 10) === todayStr ? '#ef4444' : 'var(--text-secondary)',
-                      flexShrink: 0,
-                    }}>
-                      {t.deadline?.slice(0, 10)}
-                    </span>
+                  ))
+                ) : (
+                  <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                    ✨ All clear! No upcoming task deadlines.
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
@@ -865,32 +890,74 @@ export default function CalendarPlanningPage() {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
+              {/* Header with Prev/Next Navigation */}
               <div style={{
-                padding: '16px 20px',
+                padding: '14px 18px',
                 borderBottom: '1px solid var(--border)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 background: 'var(--surface-2)',
+                gap: 8,
               }}>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--blue)', textTransform: 'uppercase' }}>
-                    Day Planning Details
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button
+                    onClick={goToPrevDay}
+                    title="Previous day"
+                    style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: 6,
+                      border: '1px solid var(--border)',
+                      background: 'var(--surface)',
+                      color: 'var(--text)',
+                      fontSize: 13,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    ←
+                  </button>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--blue)', textTransform: 'uppercase' }}>
+                      Day Planning Details
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 900, color: 'var(--text)' }}>
+                      {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)', marginTop: 2 }}>
-                    {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-                  </div>
+                  <button
+                    onClick={goToNextDay}
+                    title="Next day"
+                    style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: 6,
+                      border: '1px solid var(--border)',
+                      background: 'var(--surface)',
+                      color: 'var(--text)',
+                      fontSize: 13,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    →
+                  </button>
                 </div>
+
                 <button
                   onClick={() => setShowDayInspector(false)}
                   style={{
                     background: 'var(--surface)',
                     border: 'none',
                     borderRadius: '50%',
-                    width: 32,
-                    height: 32,
-                    fontSize: 16,
+                    width: 30,
+                    height: 30,
+                    fontSize: 15,
                     color: 'var(--text-muted)',
                     cursor: 'pointer',
                   }}
@@ -900,7 +967,7 @@ export default function CalendarPlanningPage() {
               </div>
 
               {/* Body */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {/* Workload Summary Bar */}
                 <div style={{
                   padding: '12px 16px',
@@ -908,7 +975,7 @@ export default function CalendarPlanningPage() {
                   background: 'var(--surface-2)',
                   border: '1px solid var(--border)',
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
                     <span style={{ fontSize: 13, fontWeight: 800, color: selectedWorkload.statusColor }}>
                       {selectedWorkload.totalHours}h Planned Workload
                     </span>
@@ -939,7 +1006,9 @@ export default function CalendarPlanningPage() {
                       ))}
                     </div>
                   ) : (
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No meetings scheduled on this day.</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', background: 'var(--surface-2)', padding: '12px 14px', borderRadius: 8 }}>
+                      No meetings scheduled on this day.
+                    </div>
                   )}
                 </div>
 
@@ -961,7 +1030,9 @@ export default function CalendarPlanningPage() {
                       ))}
                     </div>
                   ) : (
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No tasks due on this day.</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', background: 'var(--surface-2)', padding: '12px 14px', borderRadius: 8 }}>
+                      No tasks due on this day.
+                    </div>
                   )}
                 </div>
               </div>

@@ -89,7 +89,6 @@ export default function TodayExecutionPage() {
   const [showNotepad, setShowNotepad] = useState(false);
   const [showScheduleDrawer, setShowScheduleDrawer] = useState(false);
   const [selectedHourForAdd, setSelectedHourForAdd] = useState('09:00');
-  const [editingItem, setEditingItem] = useState(null);
   const [drawerSearch, setDrawerSearch] = useState('');
   const [drawerTab, setDrawerTab] = useState('all');
 
@@ -272,7 +271,7 @@ export default function TodayExecutionPage() {
     .filter(m => {
       if (!m.time) return false;
       const [mh, mm] = m.time.split(':').map(Number);
-      return (mh * 60 + mm) >= currentMinutesTotal - 30; // Within 30 min ago or future
+      return (mh * 60 + mm) >= currentMinutesTotal - 30;
     })
     .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
@@ -286,7 +285,7 @@ export default function TodayExecutionPage() {
 
   return (
     <AppShell>
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '16px 16px 90px 16px', position: 'relative' }}>
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '16px 16px 120px 16px', position: 'relative' }}>
         
         {/* ── STICKY COMMAND HEADER ───────────────────────────────────────────── */}
         <div style={{
@@ -518,7 +517,7 @@ export default function TodayExecutionPage() {
 
           {/* Timeline Vertical Slots */}
           <div style={{ position: 'relative', padding: '10px 0' }}>
-            {HOURS.map((hourStr, idx) => {
+            {HOURS.map((hourStr) => {
               const hourNum = parseInt(hourStr.split(':')[0], 10);
               const isCurrentHour = currentH === hourNum;
               const isDragOver = dragOverHour === hourStr;
@@ -536,7 +535,7 @@ export default function TodayExecutionPage() {
                   onDrop={(e) => handleDropOnHour(e, hourStr)}
                   style={{
                     position: 'relative',
-                    minHeight: 64,
+                    minHeight: 68,
                     display: 'flex',
                     borderBottom: '1px solid var(--border)',
                     background: isDragOver
@@ -755,7 +754,7 @@ export default function TodayExecutionPage() {
                       );
                     })}
 
-                    {/* Empty placeholder slot hint if nothing in this hour */}
+                    {/* Interactive empty placeholder */}
                     {hourItems.length === 0 && (
                       <div
                         style={{
@@ -765,10 +764,14 @@ export default function TodayExecutionPage() {
                           alignItems: 'center',
                           color: 'var(--text-muted)',
                           fontSize: 11,
-                          opacity: 0.4,
+                          opacity: 0.45,
+                          borderRadius: 6,
+                          padding: '0 4px',
+                          border: '1px dashed transparent',
+                          transition: 'all 0.15s ease',
                         }}
                       >
-                        + Tap to schedule
+                        + Tap to schedule at {fmt12(hourStr)}
                       </div>
                     )}
                   </div>
@@ -783,7 +786,7 @@ export default function TodayExecutionPage() {
           onClick={() => openScheduleAtHour(currentTimeStr)}
           style={{
             position: 'fixed',
-            bottom: 80,
+            bottom: 'calc(var(--bottom-nav-h, 68px) + 16px)',
             right: 20,
             zIndex: 50,
             background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
@@ -800,8 +803,6 @@ export default function TodayExecutionPage() {
             cursor: 'pointer',
             transition: 'transform 0.15s ease',
           }}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
           <span style={{ fontSize: 18 }}>＋</span>
           <span>Schedule</span>
@@ -830,7 +831,7 @@ export default function TodayExecutionPage() {
                 display: 'flex',
                 flexDirection: 'column',
                 boxShadow: '0 -10px 40px rgba(0,0,0,0.3)',
-                padding: '20px 20px 30px 20px',
+                padding: '20px 20px calc(30px + env(safe-area-inset-bottom, 0px)) 20px',
               }}
               onClick={(e) => e.stopPropagation()}
             >
