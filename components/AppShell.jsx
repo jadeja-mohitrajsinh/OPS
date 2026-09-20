@@ -76,10 +76,9 @@ const NAV_SECTIONS = [
 ];
 
 const BOTTOM_NAV = [
-  { href: '/', label: 'Home', icon: 'home' },
   { href: '/today', label: 'Today', icon: 'today' },
-  { href: '/calendar', label: 'Calendar', icon: 'calendar' },
   { href: '/tasks', label: 'Tasks', icon: 'tasks' },
+  { href: '/projects', label: 'Projects', icon: 'projects' },
 ];
 
 const QUICK_ACTIONS = [
@@ -164,9 +163,10 @@ export default function AppShell({ children, overdueBadge = 0 }) {
   const isActive = (href) => href === '/' ? pathname === '/' : pathname.startsWith(href);
 
   const MORE_ITEMS = [
+    { href: '/', label: 'Home', icon: 'home', emoji: '🏠' },
+    { href: '/calendar', label: 'Calendar', icon: 'calendar', emoji: '📅' },
     { href: '/meetings', label: 'Meetings', icon: 'meetings', emoji: '👥' },
     { href: '/people', label: 'People', icon: 'people', emoji: '👤' },
-    { href: '/projects', label: 'Projects', icon: 'projects', emoji: '📊' },
     { href: '/forge', label: 'Forge', icon: 'forge', emoji: '⚡' },
     { href: '/gate', label: 'GATE 2027', icon: 'gate', emoji: '🎓' },
     { href: '/college', label: 'College', icon: 'college', emoji: '🏫' },

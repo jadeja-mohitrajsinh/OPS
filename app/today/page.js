@@ -5,132 +5,134 @@ import Link from 'next/link';
 import ReminderCenter from '@/components/ReminderCenter';
 import { checkNotificationPermission, syncAllTodayReminders } from '@/lib/notifications';
 
-const DEFAULT_SCHEDULE = [
-  { id: 'sb_1', time: '06:00', label: 'Wake up / Morning', type: 'habit', color: '#8b5cf6' },
-  { id: 'sb_2', time: '06:30', label: 'Exercise / Gym', type: 'health', color: '#10b981' },
-  { id: 'sb_3', time: '08:00', label: 'GATE Study Block', type: 'gate', color: '#3b82f6' },
-  { id: 'sb_4', time: '10:00', label: 'College / Classes', type: 'college', color: '#f59e0b' },
-  { id: 'sb_5', time: '13:00', label: 'Lunch / Break', type: 'break', color: '#6b7280' },
-  { id: 'sb_6', time: '14:00', label: 'Forge / Startup Work', type: 'forge', color: '#ec4899' },
-  { id: 'sb_7', time: '17:00', label: 'Gym / Fitness', type: 'health', color: '#10b981' },
-  { id: 'sb_8', time: '19:00', label: 'GATE / Deep Work', type: 'gate', color: '#3b82f6' },
-  { id: 'sb_9', time: '21:00', label: 'Review / Reflect', type: 'review', color: '#ef4444' },
-  { id: 'sb_10', time: '22:00', label: 'Reading / Wind down', type: 'personal', color: '#6366f1' },
+// ─── Constants & Color Schemes ───────────────────────────────────────────────
+const DEFAULT_TIMELINE_ITEMS = [
+  { id: 'item_1',  time: '06:00', duration: 30, title: 'Wake Up & Morning Routine', type: 'habit',   color: '#8b5cf6', completed: false },
+  { id: 'item_2',  time: '06:30', duration: 60, title: 'Exercise / Gym Session',    type: 'health',  color: '#10b981', completed: false },
+  { id: 'item_3',  time: '08:00', duration: 90, title: 'GATE Deep Study Session',   type: 'gate',    color: '#3b82f6', completed: false },
+  { id: 'item_4',  time: '10:00', duration: 180,title: 'College Lectures / Labs',    type: 'college', color: '#f59e0b', completed: false },
+  { id: 'item_5',  time: '13:00', duration: 60, title: 'Lunch & Recharge Break',     type: 'break',   color: '#6b7280', completed: false },
+  { id: 'item_6',  time: '14:00', duration: 120,title: 'Startup / Forge Work',       type: 'forge',   color: '#ec4899', completed: false },
+  { id: 'item_7',  time: '17:00', duration: 60, title: 'Gym & Fitness',              type: 'health',  color: '#10b981', completed: false },
+  { id: 'item_8',  time: '19:00', duration: 90, title: 'GATE Practice & Revision',   type: 'gate',    color: '#3b82f6', completed: false },
+  { id: 'item_9',  time: '21:00', duration: 45, title: 'Daily Review & Log',         type: 'review',  color: '#ef4444', completed: false },
+  { id: 'item_10', time: '22:00', duration: 60, title: 'Reading & Wind Down',        type: 'personal',color: '#6366f1', completed: false },
 ];
 
-const PRIORITY_COLORS = {
-  P0: { text: 'P0', color: 'var(--red)', bg: 'var(--red-bg)' },
-  P1: { text: 'P1', color: 'var(--orange)', bg: 'var(--orange-bg)' },
-  P2: { text: 'P2', color: 'var(--blue)', bg: 'var(--blue-bg)' },
-  P3: { text: 'P3', color: 'var(--text-muted)', bg: 'var(--surface-2)' },
+const HOURS = Array.from({ length: 19 }, (_, i) => {
+  const h = i + 5; // 05:00 to 23:00
+  return `${String(h).padStart(2, '0')}:00`;
+});
+
+const TYPE_CONFIG = {
+  task:     { label: 'Task',     color: '#6366f1', bg: 'rgba(99,102,241,0.12)',  border: '#6366f1', icon: '✓' },
+  meeting:  { label: 'Meeting',  color: '#2563eb', bg: 'rgba(37,99,235,0.12)',   border: '#2563eb', icon: '👥' },
+  gate:     { label: 'GATE',     color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  border: '#3b82f6', icon: '🎓' },
+  college:  { label: 'College',  color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: '#f59e0b', icon: '🏛️' },
+  forge:    { label: 'Forge',    color: '#ec4899', bg: 'rgba(236,72,153,0.12)',  border: '#ec4899', icon: '⚡' },
+  health:   { label: 'Health',   color: '#10b981', bg: 'rgba(16,185,129,0.12)',  border: '#10b981', icon: '💪' },
+  habit:    { label: 'Habit',    color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  border: '#8b5cf6', icon: '✨' },
+  review:   { label: 'Review',   color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   border: '#ef4444', icon: '📊' },
+  break:    { label: 'Break',    color: '#6b7280', bg: 'rgba(107,114,128,0.12)', border: '#6b7280', icon: '☕' },
+  personal: { label: 'Personal', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  border: '#8b5cf6', icon: '📖' },
 };
 
-export default function TodayPage() {
+function fmt12(time24) {
+  if (!time24) return '';
+  const [h, m] = time24.split(':').map(Number);
+  const p = h >= 12 ? 'PM' : 'AM';
+  const displayH = h % 12 || 12;
+  return m ? `${displayH}:${String(m).padStart(2, '0')} ${p}` : `${displayH} ${p}`;
+}
+
+function todayStr() {
+  const t = new Date();
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+}
+
+export default function TodayExecutionPage() {
+  // ── State ───────────────────────────────────────────────────────────────────
   const [tasks, setTasks] = useState([]);
   const [meetings, setMeetings] = useState([]);
+  const [gateSubjects, setGateSubjects] = useState([]);
+  const [collegeSubjects, setCollegeSubjects] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('split'); // 'split' | 'timeline' | 'tasks'
 
-  // Schedule blocks state (persisted)
-  const [schedule, setSchedule] = useState(() => {
+  // Scheduled timeline items
+  const [timelineItems, setTimelineItems] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('today_schedule_blocks_v1');
-      if (saved) {
-        try { return JSON.parse(saved); } catch {}
-      }
+      try {
+        const saved = localStorage.getItem('ops_today_timeline_v2');
+        if (saved) return JSON.parse(saved);
+      } catch {}
     }
-    return DEFAULT_SCHEDULE;
+    return DEFAULT_TIMELINE_ITEMS;
   });
 
-  // Block task assignments map: { [blockId]: [taskId, taskId] }
-  const [blockAssignments, setBlockAssignments] = useState(() => {
+  // Live Time
+  const [currentTime, setCurrentTime] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setCurrentTime(new Date()), 10000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Persist timeline items
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('today_block_assignments_v1');
-      if (saved) {
-        try { return JSON.parse(saved); } catch {}
-      }
+      localStorage.setItem('ops_today_timeline_v2', JSON.stringify(timelineItems));
     }
-    return {};
-  });
+  }, [timelineItems]);
 
-  // Drag & drop state
-  const [draggedTaskId, setDraggedTaskId] = useState(null);
-  const [dragOverBlockId, setDragOverBlockId] = useState(null);
-
-  // Edit / Add block modal
-  const [showBlockModal, setShowBlockModal] = useState(false);
+  // UI States
   const [showReminderCenter, setShowReminderCenter] = useState(false);
-  const [editingBlock, setEditingBlock] = useState(null);
-  const [blockForm, setBlockForm] = useState({
-    time: '15:00',
-    label: '',
-    type: 'forge',
-    color: '#ec4899',
-  });
-
-  // Notepad state
   const [showNotepad, setShowNotepad] = useState(false);
+  const [showScheduleDrawer, setShowScheduleDrawer] = useState(false);
+  const [selectedHourForAdd, setSelectedHourForAdd] = useState('09:00');
+  const [editingItem, setEditingItem] = useState(null);
+  const [drawerSearch, setDrawerSearch] = useState('');
+  const [drawerTab, setDrawerTab] = useState('all');
+
+  // Notepad State
   const [noteText, setNoteText] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('ops_today_quicknote') || '';
-    }
+    if (typeof window !== 'undefined') return localStorage.getItem('ops_today_quicknote') || '';
     return '';
   });
   const noteRef = useRef(null);
-
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ops_today_quicknote', noteText);
-    }
+    if (typeof window !== 'undefined') localStorage.setItem('ops_today_quicknote', noteText);
   }, [noteText]);
-
   useEffect(() => {
-    if (showNotepad && noteRef.current) {
-      noteRef.current.focus();
-    }
+    if (showNotepad && noteRef.current) noteRef.current.focus();
   }, [showNotepad]);
 
-  // Current time state for live NOW line
-  const [currentTime, setCurrentTime] = useState(new Date());
+  // Drag & Drop State
+  const [draggedItemId, setDraggedItemId] = useState(null);
+  const [dragOverHour, setDragOverHour] = useState(null);
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 30000);
-    return () => clearInterval(timer);
-  }, []);
+  // Auto-scroll ref
+  const nowMarkerRef = useRef(null);
+  const timelineContainerRef = useRef(null);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('today_schedule_blocks_v1', JSON.stringify(schedule));
-    }
-  }, [schedule]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('today_block_assignments_v1', JSON.stringify(blockAssignments));
-    }
-  }, [blockAssignments]);
-
+  // ── Fetch Data ──────────────────────────────────────────────────────────────
   async function loadData() {
     try {
-      const [tRes, mRes] = await Promise.all([
-        fetch('/api/tasks'),
-        fetch('/api/meetings?upcoming=true'),
+      const today = todayStr();
+      const [tRes, mRes, gRes, cRes, pRes] = await Promise.all([
+        fetch('/api/tasks').then(r => r.json()).catch(() => ({ success: false, data: [] })),
+        fetch('/api/meetings?upcoming=true').then(r => r.json()).catch(() => ({ success: false, data: [] })),
+        fetch('/api/gate').then(r => r.json()).catch(() => ({ success: false, data: [] })),
+        fetch('/api/college').then(r => r.json()).catch(() => ({ success: false, data: [] })),
+        fetch('/api/projects').then(r => r.json()).catch(() => ({ success: false, data: [] })),
       ]);
-      const tData = await tRes.json();
-      const mData = await mRes.json();
-      const taskList = tData.success ? tData.data.filter(t => !['DONE', 'CANCELLED'].includes(t.status)) : [];
-      
-      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-      const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
-      const todayMeetings = mData.success ? mData.data.filter(m => {
-        const d = new Date(m.date);
-        return d >= todayStart && d <= todayEnd;
-      }) : [];
 
-      setTasks(taskList);
-      setMeetings(todayMeetings);
-    } catch (err) {
-      console.error(err);
+      if (tRes.success) setTasks(tRes.data || []);
+      if (mRes.success) setMeetings((mRes.data || []).filter(m => m.date && m.date.slice(0, 10) === today));
+      if (gRes.success) setGateSubjects(gRes.data || []);
+      if (cRes.success) setCollegeSubjects(cRes.data || []);
+      if (pRes.success) setProjects(pRes.data || []);
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -140,796 +142,1089 @@ export default function TodayPage() {
     loadData();
   }, []);
 
-  async function handleToggleTask(id, currentStatus) {
+  // Scroll to NOW on load
+  const scrollToNow = () => {
+    if (nowMarkerRef.current) {
+      nowMarkerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(scrollToNow, 400);
+    }
+  }, [loading]);
+
+  // ── Time Calculations ──────────────────────────────────────────────────────
+  const currentH = currentTime.getHours();
+  const currentM = currentTime.getMinutes();
+  const currentMinutesTotal = currentH * 60 + currentM;
+  const currentTimeStr = `${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`;
+  const displayTime = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  const displayDate = currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  // ── Actions ─────────────────────────────────────────────────────────────────
+  const handleToggleTaskComplete = async (taskId, currentStatus) => {
+    const newStatus = currentStatus === 'DONE' ? 'TODO' : 'DONE';
+    setTasks(prev => prev.map(t => t._id === taskId ? { ...t, status: newStatus } : t));
+    setTimelineItems(prev => prev.map(item => item.taskId === taskId ? { ...item, completed: newStatus === 'DONE' } : item));
+
     try {
-      const nextStatus = currentStatus === 'DONE' ? 'TODO' : 'DONE';
-      await fetch(`/api/tasks/${id}`, {
+      await fetch(`/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: nextStatus }),
+        body: JSON.stringify({ status: newStatus }),
       });
-      loadData();
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
+      console.error(e);
     }
-  }
+  };
 
-  // --- Drag & Drop Handlers ---
-  function handleDragStart(e, taskId) {
-    setDraggedTaskId(taskId);
-    e.dataTransfer.setData('text/plain', taskId);
+  const handleToggleTimelineItem = (itemId) => {
+    setTimelineItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const nextCompleted = !item.completed;
+        if (item.taskId) {
+          handleToggleTaskComplete(item.taskId, item.completed ? 'DONE' : 'TODO');
+        }
+        return { ...item, completed: nextCompleted };
+      }
+      return item;
+    }));
+  };
+
+  const handleDeleteTimelineItem = (itemId) => {
+    setTimelineItems(prev => prev.filter(item => item.id !== itemId));
+  };
+
+  const handleAddItemToHour = (itemData, targetHour) => {
+    const newItem = {
+      id: `tl_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      time: targetHour || selectedHourForAdd || '09:00',
+      duration: itemData.duration || 60,
+      title: itemData.title || itemData.name || 'New Item',
+      type: itemData.type || 'task',
+      color: itemData.color || (TYPE_CONFIG[itemData.type]?.color || '#6366f1'),
+      completed: itemData.status === 'DONE',
+      taskId: itemData._id || itemData.taskId || null,
+      notes: itemData.notes || itemData.description || '',
+      link: itemData.link || null,
+      attendees: itemData.attendees || null,
+    };
+
+    setTimelineItems(prev => [...prev, newItem].sort((a, b) => a.time.localeCompare(b.time)));
+    setShowScheduleDrawer(false);
+  };
+
+  // ── Drag & Drop Handlers ────────────────────────────────────────────────────
+  const handleDragStart = (e, itemId) => {
+    setDraggedItemId(itemId);
+    e.dataTransfer.setData('text/plain', itemId);
     e.dataTransfer.effectAllowed = 'move';
-  }
+  };
 
-  function handleDragOver(e, blockId) {
+  const handleDragOver = (e, hour) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    if (dragOverBlockId !== blockId) {
-      setDragOverBlockId(blockId);
-    }
-  }
+    if (dragOverHour !== hour) setDragOverHour(hour);
+  };
 
-  function handleDragLeave(e, blockId) {
-    if (dragOverBlockId === blockId) {
-      setDragOverBlockId(null);
-    }
-  }
-
-  function handleDrop(e, targetBlockId) {
+  const handleDropOnHour = (e, targetHour) => {
     e.preventDefault();
-    const taskId = draggedTaskId || e.dataTransfer.getData('text/plain');
-    setDragOverBlockId(null);
-    setDraggedTaskId(null);
+    const itemId = draggedItemId || e.dataTransfer.getData('text/plain');
+    setDragOverHour(null);
+    setDraggedItemId(null);
 
-    if (!taskId) return;
+    if (!itemId) return;
 
-    // Remove taskId from any other block first
-    const newAssignments = { ...blockAssignments };
-    Object.keys(newAssignments).forEach(bId => {
-      newAssignments[bId] = (newAssignments[bId] || []).filter(id => id !== taskId);
-    });
+    setTimelineItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, time: targetHour };
+      }
+      return item;
+    }).sort((a, b) => a.time.localeCompare(b.time)));
+  };
 
-    // If targetBlockId is provided (not unassigned pool), assign to block
-    if (targetBlockId && targetBlockId !== 'unassigned') {
-      newAssignments[targetBlockId] = [...(newAssignments[targetBlockId] || []), taskId];
+  // Quick prompt to add at specific hour
+  const openScheduleAtHour = (hour) => {
+    setSelectedHourForAdd(hour);
+    setShowScheduleDrawer(true);
+  };
+
+  // ── Find Current Execution Item ─────────────────────────────────────────────
+  const sortedItems = [...timelineItems].sort((a, b) => a.time.localeCompare(b.time));
+  let currentActiveItem = null;
+
+  for (let i = 0; i < sortedItems.length; i++) {
+    const item = sortedItems[i];
+    const [ih, im] = item.time.split(':').map(Number);
+    const itemStartMin = ih * 60 + im;
+    const itemEndMin = itemStartMin + (item.duration || 60);
+
+    if (currentMinutesTotal >= itemStartMin && currentMinutesTotal < itemEndMin) {
+      currentActiveItem = item;
+      break;
     }
-
-    setBlockAssignments(newAssignments);
   }
 
-  function unassignTask(taskId) {
-    const newAssignments = { ...blockAssignments };
-    Object.keys(newAssignments).forEach(bId => {
-      newAssignments[bId] = (newAssignments[bId] || []).filter(id => id !== taskId);
-    });
-    setBlockAssignments(newAssignments);
-  }
+  // Next upcoming meeting
+  const upcomingMeetings = meetings
+    .filter(m => {
+      if (!m.time) return false;
+      const [mh, mm] = m.time.split(':').map(Number);
+      return (mh * 60 + mm) >= currentMinutesTotal - 30; // Within 30 min ago or future
+    })
+    .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
-  // --- Schedule Customization ---
-  function handleSaveBlock(e) {
-    e.preventDefault();
-    if (!blockForm.label.trim()) return;
+  const nextMeeting = upcomingMeetings[0];
 
-    if (editingBlock) {
-      setSchedule(prev => prev.map(b => b.id === editingBlock.id ? { ...b, ...blockForm } : b));
-    } else {
-      const newBlock = {
-        id: `sb_${Date.now()}`,
-        ...blockForm,
-      };
-      // Insert in sorted time order
-      const updated = [...schedule, newBlock].sort((a, b) => a.time.localeCompare(b.time));
-      setSchedule(updated);
-    }
-
-    setShowBlockModal(false);
-    setEditingBlock(null);
-    setBlockForm({ time: '15:00', label: '', type: 'forge', color: '#ec4899' });
-  }
-
-  function handleDeleteBlock(id) {
-    if (!confirm('Remove this time block?')) return;
-    setSchedule(prev => prev.filter(b => b.id !== id));
-    // Clear assignments for deleted block
-    const newAssignments = { ...blockAssignments };
-    delete newAssignments[id];
-    setBlockAssignments(newAssignments);
-  }
-
-  function openEditBlock(block) {
-    setEditingBlock(block);
-    setBlockForm({
-      time: block.time,
-      label: block.label,
-      type: block.type || 'forge',
-      color: block.color || '#3b82f6',
-    });
-    setShowBlockModal(true);
-  }
-
-  function resetToDefaultSchedule() {
-    if (!confirm('Reset schedule to default 06:00 - 22:00 template?')) return;
-    setSchedule(DEFAULT_SCHEDULE);
-    setBlockAssignments({});
-  }
-
-  // Compute assigned tasks map for fast lookup
-  const assignedTaskIds = new Set(Object.values(blockAssignments).flat());
-  const unassignedTasks = tasks.filter(t => !assignedTaskIds.has(t._id));
-
-  // Determine current active block
-  const currentHours = currentTime.getHours();
-  const currentMins = currentTime.getMinutes();
-  const currentTimeStr = `${String(currentHours).padStart(2, '0')}:${String(currentMins).padStart(2, '0')}`;
-
-  const sortedSchedule = [...schedule].sort((a, b) => a.time.localeCompare(b.time));
-
-  function isBlockCurrent(block, index) {
-    const nextBlock = sortedSchedule[index + 1];
-    if (!nextBlock) {
-      return currentTimeStr >= block.time;
-    }
-    return currentTimeStr >= block.time && currentTimeStr < nextBlock.time;
-  }
+  // Drawer filtering
+  const filteredTasks = tasks.filter(t => !['DONE', 'CANCELLED'].includes(t.status) && (drawerSearch ? t.title?.toLowerCase().includes(drawerSearch.toLowerCase()) : true));
+  const filteredGate = gateSubjects.filter(g => drawerSearch ? g.name?.toLowerCase().includes(drawerSearch.toLowerCase()) : true);
+  const filteredCollege = collegeSubjects.filter(c => drawerSearch ? c.name?.toLowerCase().includes(drawerSearch.toLowerCase()) : true);
+  const filteredProjects = projects.filter(p => drawerSearch ? p.name?.toLowerCase().includes(drawerSearch.toLowerCase()) : true);
 
   return (
     <AppShell>
-      {/* Top Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 24 }}>⚡</span>
-            <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px' }}>Daily Focus & Timeblocker</h1>
-          </div>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-            {currentTime.toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} · Live Time: <strong style={{ color: 'var(--text)' }}>{currentTimeStr}</strong>
-          </p>
-        </div>
-
-        {/* View toggles & Add custom block */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', background: 'var(--surface-2)', padding: 3, borderRadius: 8 }}>
-            <button
-              onClick={() => setViewMode('split')}
-              style={{
-                padding: '5px 12px',
-                borderRadius: 6,
-                fontSize: 12,
-                fontWeight: 700,
-                border: 'none',
-                cursor: 'pointer',
-                background: viewMode === 'split' ? 'var(--text)' : 'transparent',
-                color: viewMode === 'split' ? 'var(--bg)' : 'var(--text-secondary)',
-              }}
-            >
-              Split View
-            </button>
-            <button
-              onClick={() => setViewMode('timeline')}
-              style={{
-                padding: '5px 12px',
-                borderRadius: 6,
-                fontSize: 12,
-                fontWeight: 700,
-                border: 'none',
-                cursor: 'pointer',
-                background: viewMode === 'timeline' ? 'var(--text)' : 'transparent',
-                color: viewMode === 'timeline' ? 'var(--bg)' : 'var(--text-secondary)',
-              }}
-            >
-              Timeline Only
-            </button>
-            <button
-              onClick={() => setViewMode('tasks')}
-              style={{
-                padding: '5px 12px',
-                borderRadius: 6,
-                fontSize: 12,
-                fontWeight: 700,
-                border: 'none',
-                cursor: 'pointer',
-                background: viewMode === 'tasks' ? 'var(--text)' : 'transparent',
-                color: viewMode === 'tasks' ? 'var(--bg)' : 'var(--text-secondary)',
-              }}
-            >
-              Tasks Pool
-            </button>
-          </div>
-
-          <button
-            className="btn btn-secondary btn-sm"
-            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-            onClick={() => setShowNotepad(true)}
-          >
-            <span>📝</span> Quick Note
-          </button>
-
-          <button
-            className="btn btn-secondary btn-sm"
-            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-            onClick={() => setShowReminderCenter(true)}
-          >
-            <span>🔔</span> Reminders
-          </button>
-
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => {
-              setEditingBlock(null);
-              setBlockForm({ time: '15:00', label: '', type: 'forge', color: '#ec4899' });
-              setShowBlockModal(true);
-            }}
-          >
-            + Add Block
-          </button>
-        </div>
-      </div>
-
-      {/* Today's Meetings Banner */}
-      {meetings.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>
-            📅 Today&apos;s Scheduled Meetings
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 8 }}>
-            {meetings.map(m => (
-              <Link key={m._id} href={`/meetings/${m._id}`} style={{ textDecoration: 'none' }}>
-                <div className="card" style={{ padding: '10px 14px', borderLeft: '3px solid var(--blue)', background: 'var(--surface-2)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{m.title}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                    ⏰ {m.startTime}{m.endTime ? ` – ${m.endTime}` : ''} {m.location ? `· ${m.location}` : ''}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {loading ? (
-        <div className="loading-state"><div className="spinner" /></div>
-      ) : (
-        /* Split View Layout */
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: viewMode === 'split' ? 'minmax(300px, 1.1fr) minmax(320px, 1.4fr)' : '1fr',
-            gap: 20,
-            alignItems: 'start',
-          }}
-          className="today-grid"
-        >
-          {/* LEFT PANEL: TASK POOL & MITs */}
-          {(viewMode === 'split' || viewMode === 'tasks') && (
-            <div
-              onDragOver={e => handleDragOver(e, 'unassigned')}
-              onDrop={e => handleDrop(e, 'unassigned')}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 14,
-                background: 'var(--surface)',
-                borderRadius: 12,
-                padding: 16,
-                border: '1px solid var(--border)',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h2 style={{ fontSize: 16, fontWeight: 800 }}>Tasks Backlog & Priorities</h2>
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                    Drag cards into the timeline slots on the right ➔
-                  </p>
-                </div>
-                <Link href="/tasks?add=1">
-                  <button className="btn btn-ghost btn-sm" style={{ fontSize: 12 }}>+ New Task</button>
-                </Link>
-              </div>
-
-              {/* Unassigned Tasks Pool */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: 200 }}>
-                {unassignedTasks.length === 0 ? (
-                  <div style={{ padding: 24, textAlign: 'center', border: '1.5px dashed var(--border)', borderRadius: 8, color: 'var(--text-muted)', fontSize: 13 }}>
-                    All current tasks scheduled into timeblocks! 🎉<br />
-                    <span style={{ fontSize: 11 }}>Drag assigned tasks back here to unschedule.</span>
-                  </div>
-                ) : (
-                  unassignedTasks.map(task => {
-                    const p = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.P1;
-                    return (
-                      <div
-                        key={task._id}
-                        draggable
-                        onDragStart={e => handleDragStart(e, task._id)}
-                        className="card"
-                        style={{
-                          padding: '12px 14px',
-                          cursor: 'grab',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 6,
-                          borderLeft: `3px solid ${p.color}`,
-                          background: 'var(--surface-2)',
-                          userSelect: 'none',
-                          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <button
-                              onClick={() => handleToggleTask(task._id, task.status)}
-                              style={{
-                                width: 18,
-                                height: 18,
-                                borderRadius: 4,
-                                border: `1.5px solid ${p.color}`,
-                                background: task.status === 'DONE' ? 'var(--green)' : 'transparent',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              {task.status === 'DONE' && '✓'}
-                            </button>
-                            <span style={{ fontSize: 13, fontWeight: 600 }}>{task.name}</span>
-                          </div>
-                          <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 4, background: p.bg, color: p.color }}>
-                            {p.text}
-                          </span>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 11, color: 'var(--text-muted)' }}>
-                          {task.area && <span style={{ background: 'var(--surface-3)', padding: '1px 6px', borderRadius: 4 }}>{task.area}</span>}
-                          {task.estimatedDuration && <span>⏱️ {task.estimatedDuration}m</span>}
-                          {task.deadline && (
-                            <span style={{ color: 'var(--orange)' }}>
-                              📅 {new Date(task.deadline).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
-                            </span>
-                          )}
-                          <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-muted)' }}>⋮⋮ drag</span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* RIGHT PANEL: CUSTOMIZABLE 24H TIMELINE */}
-          {(viewMode === 'split' || viewMode === 'timeline') && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
-                background: 'var(--surface)',
-                borderRadius: 12,
-                padding: 16,
-                border: '1px solid var(--border)',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <div>
-                  <h2 style={{ fontSize: 16, fontWeight: 800 }}>Customized Timeline</h2>
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                    Drop tasks directly into the targeted time slots below
-                  </p>
-                </div>
-                <button
-                  className="btn btn-ghost btn-sm"
-                  style={{ fontSize: 11, color: 'var(--text-muted)' }}
-                  onClick={resetToDefaultSchedule}
-                >
-                  Reset Template
-                </button>
-              </div>
-
-              {/* Timeline blocks */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {sortedSchedule.map((block, index) => {
-                  const isCurrent = isBlockCurrent(block, index);
-                  const isOver = dragOverBlockId === block.id;
-                  const assignedIds = blockAssignments[block.id] || [];
-                  const assignedTasksList = tasks.filter(t => assignedIds.includes(t._id));
-
-                  return (
-                    <div
-                      key={block.id}
-                      onDragOver={e => handleDragOver(e, block.id)}
-                      onDragLeave={e => handleDragLeave(e, block.id)}
-                      onDrop={e => handleDrop(e, block.id)}
-                      style={{
-                        position: 'relative',
-                        padding: 12,
-                        borderRadius: 10,
-                        background: isOver
-                          ? 'var(--surface-3)'
-                          : isCurrent
-                          ? 'var(--purple-bg)'
-                          : 'var(--surface-2)',
-                        border: isOver
-                          ? '2px dashed var(--accent)'
-                          : isCurrent
-                          ? '1.5px solid var(--purple)'
-                          : '1px solid var(--border-subtle)',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      {/* Block Header */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <span
-                            style={{
-                              fontSize: 13,
-                              fontWeight: 800,
-                              fontVariantNumeric: 'tabular-nums',
-                              color: isCurrent ? 'var(--purple)' : 'var(--text)',
-                              minWidth: 46,
-                            }}
-                          >
-                            {block.time}
-                          </span>
-                          <div
-                            style={{
-                              width: 9,
-                              height: 9,
-                              borderRadius: '50%',
-                              background: block.color || 'var(--blue)',
-                            }}
-                          />
-                          <span style={{ fontSize: 14, fontWeight: isCurrent ? 800 : 600, color: 'var(--text)' }}>
-                            {block.label}
-                          </span>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          {isCurrent && (
-                            <span
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 900,
-                                background: 'var(--purple)',
-                                color: '#fff',
-                                padding: '2px 8px',
-                                borderRadius: 10,
-                                letterSpacing: '0.6px',
-                              }}
-                            >
-                              NOW
-                            </span>
-                          )}
-                          <button
-                            onClick={() => openEditBlock(block)}
-                            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12 }}
-                            title="Edit Block"
-                          >
-                            ✎
-                          </button>
-                          <button
-                            onClick={() => handleDeleteBlock(block.id)}
-                            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12 }}
-                            title="Delete Block"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Drop Target & Assigned Tasks List */}
-                      <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {assignedTasksList.length === 0 ? (
-                          <div
-                            style={{
-                              fontSize: 12,
-                              color: isOver ? 'var(--accent)' : 'var(--text-muted)',
-                              padding: '6px 8px',
-                              borderRadius: 6,
-                              background: isOver ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-                              border: isOver ? '1px dashed var(--accent)' : '1px dashed transparent',
-                              textAlign: 'center',
-                            }}
-                          >
-                            {isOver ? 'Drop task here to schedule' : '+ Drop tasks here'}
-                          </div>
-                        ) : (
-                          assignedTasksList.map(task => {
-                            const p = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.P1;
-                            const isDone = task.status === 'DONE';
-
-                            return (
-                              <div
-                                key={task._id}
-                                draggable
-                                onDragStart={e => handleDragStart(e, task._id)}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                  padding: '8px 10px',
-                                  borderRadius: 6,
-                                  background: 'var(--surface)',
-                                  border: '1px solid var(--border)',
-                                  gap: 8,
-                                  cursor: 'grab',
-                                }}
-                              >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-                                  <button
-                                    onClick={() => handleToggleTask(task._id, task.status)}
-                                    style={{
-                                      width: 18,
-                                      height: 18,
-                                      borderRadius: 4,
-                                      border: isDone ? 'none' : `1.5px solid ${p.color}`,
-                                      background: isDone ? 'var(--green)' : 'transparent',
-                                      color: 'white',
-                                      cursor: 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      fontSize: 10,
-                                      fontWeight: 800,
-                                    }}
-                                  >
-                                    {isDone && '✓'}
-                                  </button>
-                                  <span
-                                    style={{
-                                      fontSize: 13,
-                                      fontWeight: 500,
-                                      textDecoration: isDone ? 'line-through' : 'none',
-                                      color: isDone ? 'var(--text-muted)' : 'var(--text)',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap',
-                                    }}
-                                  >
-                                    {task.name}
-                                  </span>
-                                </div>
-
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                                  <span style={{ fontSize: 9, fontWeight: 800, padding: '1px 5px', borderRadius: 4, background: p.bg, color: p.color }}>
-                                    {p.text}
-                                  </span>
-                                  <button
-                                    onClick={() => unassignTask(task._id)}
-                                    style={{
-                                      background: 'none',
-                                      border: 'none',
-                                      color: 'var(--text-muted)',
-                                      cursor: 'pointer',
-                                      fontSize: 12,
-                                    }}
-                                    title="Unschedule task"
-                                  >
-                                    ↩
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Modal: Add/Edit Custom Block */}
-      {showBlockModal && (
-        <div className="modal-backdrop" onClick={() => setShowBlockModal(false)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800 }}>{editingBlock ? 'Edit Time Block' : 'Add Time Block'}</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowBlockModal(false)}>✕</button>
-            </div>
-            <form onSubmit={handleSaveBlock} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 10 }}>
-                <div>
-                  <label className="label">Time (24h) *</label>
-                  <input
-                    type="time"
-                    className="input"
-                    required
-                    value={blockForm.time}
-                    onChange={e => setBlockForm({ ...blockForm, time: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="label">Block Label *</label>
-                  <input
-                    className="input"
-                    required
-                    placeholder="e.g. Deep ML Coding / Customer Calls"
-                    value={blockForm.label}
-                    onChange={e => setBlockForm({ ...blockForm, label: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div>
-                  <label className="label">Category</label>
-                  <select
-                    className="input select"
-                    value={blockForm.type}
-                    onChange={e => setBlockForm({ ...blockForm, type: e.target.value })}
-                  >
-                    <option value="gate">GATE Study</option>
-                    <option value="forge">Forge / Startup</option>
-                    <option value="college">College / Classes</option>
-                    <option value="health">Gym / Fitness</option>
-                    <option value="habit">Habit / Routine</option>
-                    <option value="review">Review / Reflection</option>
-                    <option value="break">Break / Lunch</option>
-                    <option value="personal">Personal / Reading</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="label">Color Accent</label>
-                  <select
-                    className="input select"
-                    value={blockForm.color}
-                    onChange={e => setBlockForm({ ...blockForm, color: e.target.value })}
-                  >
-                    <option value="#3b82f6">🔵 Blue (GATE / Study)</option>
-                    <option value="#ec4899">🟣 Pink / Magenta (Forge / Startup)</option>
-                    <option value="#10b981">🟢 Green (Fitness / Health)</option>
-                    <option value="#f59e0b">🟡 Amber (College / Classes)</option>
-                    <option value="#8b5cf6">🪻 Purple (Habits)</option>
-                    <option value="#ef4444">🔴 Red (Review / Critical)</option>
-                    <option value="#6b7280">⚪ Neutral (Break)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowBlockModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Block</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Fullscreen Notepad Overlay */}
-      {showNotepad && (
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '16px 16px 90px 16px', position: 'relative' }}>
+        
+        {/* ── STICKY COMMAND HEADER ───────────────────────────────────────────── */}
         <div style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 300,
+          position: 'sticky',
+          top: 0,
+          zIndex: 40,
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          background: 'rgba(var(--surface-rgb, 18, 18, 20), 0.85)',
+          borderBottom: '1px solid var(--border)',
+          margin: '-16px -16px 16px -16px',
+          padding: '12px 16px',
           display: 'flex',
-          flexDirection: 'column',
-          background: 'var(--bg)',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
         }}>
-          {/* Notepad Toolbar */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{
+                fontSize: 11,
+                fontWeight: 900,
+                letterSpacing: '1.2px',
+                color: 'var(--purple)',
+                textTransform: 'uppercase',
+                background: 'var(--purple-bg)',
+                padding: '2px 8px',
+                borderRadius: 6,
+              }}>TODAY</span>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>
+                {displayDate}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              <div style={{
+                fontSize: 18,
+                fontWeight: 800,
+                color: 'var(--text)',
+                fontVariantNumeric: 'tabular-nums',
+                letterSpacing: '-0.3px',
+              }}>
+                {displayTime}
+              </div>
+              {currentActiveItem ? (
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: currentActiveItem.color || 'var(--purple)',
+                  background: 'var(--surface-2)',
+                  padding: '3px 8px',
+                  borderRadius: 20,
+                  border: `1px solid ${currentActiveItem.color || 'var(--border)'}40`,
+                  maxWidth: 240,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: currentActiveItem.color || 'var(--purple)', animation: 'pulse 2s infinite' }} />
+                  {currentActiveItem.title}
+                </div>
+              ) : (
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>• Standby / Free</span>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Header Actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={scrollToNow}
+              title="Jump to NOW"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                background: 'rgba(239, 68, 68, 0.12)',
+                color: '#ef4444',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: 8,
+                padding: '6px 10px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444' }} />
+              NOW
+            </button>
+
+            <button
+              onClick={() => setShowNotepad(true)}
+              title="Quick Note"
+              style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                color: 'var(--text)',
+                borderRadius: 8,
+                width: 34,
+                height: 34,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 15,
+                cursor: 'pointer',
+              }}
+            >
+              📝
+            </button>
+
+            <button
+              onClick={() => setShowReminderCenter(true)}
+              title="Reminders"
+              style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                color: 'var(--text)',
+                borderRadius: 8,
+                width: 34,
+                height: 34,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 15,
+                cursor: 'pointer',
+              }}
+            >
+              🔔
+            </button>
+
+            <button
+              onClick={() => openScheduleAtHour(currentTimeStr)}
+              style={{
+                background: 'var(--purple)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '6px 12px',
+                fontSize: 12,
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                cursor: 'pointer',
+              }}
+            >
+              ＋ Add
+            </button>
+          </div>
+        </div>
+
+        {/* ── TODAY'S MEETINGS BANNER (if any) ────────────────────────────────── */}
+        {nextMeeting && (
           <div style={{
+            background: 'linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(99,102,241,0.08) 100%)',
+            border: '1px solid rgba(37,99,235,0.3)',
+            borderRadius: 12,
+            padding: '10px 14px',
+            marginBottom: 16,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '12px 16px',
-            borderBottom: '1px solid var(--border)',
-            background: 'var(--surface)',
-            flexShrink: 0,
+            gap: 12,
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 18 }}>📝</span>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 800 }}>Quick Note</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                  {noteText.length} chars · Auto-saved
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+              <span style={{ fontSize: 18 }}>👥</span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#3b82f6', textTransform: 'uppercase' }}>Upcoming Meeting</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>• {fmt12(nextMeeting.time)}</span>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {nextMeeting.title}
                 </div>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                onClick={() => setNoteText('')}
+            {nextMeeting.link && (
+              <a
+                href={nextMeeting.link}
+                target="_blank"
+                rel="noreferrer"
                 style={{
-                  background: 'var(--surface-2)',
-                  border: '1px solid var(--border)',
+                  background: '#2563eb',
+                  color: '#fff',
                   borderRadius: 8,
                   padding: '6px 12px',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                }}
-              >
-                Clear
-              </button>
-              <button
-                onClick={() => {
-                  navigator.clipboard?.writeText(noteText).catch(() => {});
-                }}
-                style={{
-                  background: 'var(--surface-2)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 8,
-                  padding: '6px 12px',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: 'var(--text)',
-                  cursor: 'pointer',
-                }}
-              >
-                Copy
-              </button>
-              <button
-                onClick={() => setShowNotepad(false)}
-                style={{
-                  background: 'var(--accent)',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '6px 16px',
                   fontSize: 12,
                   fontWeight: 800,
-                  color: '#fff',
-                  cursor: 'pointer',
+                  textDecoration: 'none',
+                  flexShrink: 0,
                 }}
               >
-                Done
-              </button>
+                Join Call →
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* ── TIMELINE CONTAINER (ONLY INTERFACE) ─────────────────────────────── */}
+        <div
+          ref={timelineContainerRef}
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 16,
+            overflow: 'hidden',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          }}
+        >
+          {/* Timeline Header Info */}
+          <div style={{
+            padding: '12px 16px',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'var(--surface-2)',
+          }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>
+              📅 Daily Execution Timeline
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+              Tap any hour to schedule • Drag to move
             </div>
           </div>
 
-          {/* The actual text area — full screen like notepad */}
-          <textarea
-            ref={noteRef}
-            value={noteText}
-            onChange={e => setNoteText(e.target.value)}
-            placeholder={`Start typing your note...\n\nIdeas, thoughts, todos, anything.\nThis saves automatically.`}
-            style={{
-              flex: 1,
-              width: '100%',
-              padding: '20px 24px',
-              background: 'var(--bg)',
-              color: 'var(--text)',
-              border: 'none',
-              outline: 'none',
-              resize: 'none',
-              fontSize: 16,
-              lineHeight: 1.8,
-              fontFamily: "'Courier New', 'Consolas', monospace",
-              letterSpacing: '0.01em',
-              caretColor: 'var(--accent)',
-              WebkitOverflowScrolling: 'touch',
-            }}
-            spellCheck
-            autoCorrect="on"
-            autoCapitalize="sentences"
-          />
+          {/* Timeline Vertical Slots */}
+          <div style={{ position: 'relative', padding: '10px 0' }}>
+            {HOURS.map((hourStr, idx) => {
+              const hourNum = parseInt(hourStr.split(':')[0], 10);
+              const isCurrentHour = currentH === hourNum;
+              const isDragOver = dragOverHour === hourStr;
 
-          {/* Bottom safe area spacer for mobile */}
-          <div style={{ height: 'env(safe-area-inset-bottom)', background: 'var(--surface)', flexShrink: 0 }} />
+              // Items falling strictly within this hour
+              const hourItems = timelineItems.filter(item => {
+                const [ih] = item.time.split(':').map(Number);
+                return ih === hourNum;
+              });
+
+              return (
+                <div
+                  key={hourStr}
+                  onDragOver={(e) => handleDragOver(e, hourStr)}
+                  onDrop={(e) => handleDropOnHour(e, hourStr)}
+                  style={{
+                    position: 'relative',
+                    minHeight: 64,
+                    display: 'flex',
+                    borderBottom: '1px solid var(--border)',
+                    background: isDragOver
+                      ? 'rgba(99,102,241,0.1)'
+                      : isCurrentHour
+                      ? 'rgba(99,102,241,0.03)'
+                      : 'transparent',
+                    transition: 'background 0.15s ease',
+                  }}
+                >
+                  {/* Left: Hour Label */}
+                  <div style={{
+                    width: 72,
+                    flexShrink: 0,
+                    padding: '8px 10px 0 12px',
+                    textAlign: 'right',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: isCurrentHour ? 'var(--purple)' : 'var(--text-muted)',
+                    fontVariantNumeric: 'tabular-nums',
+                    borderRight: '1px solid var(--border)',
+                    userSelect: 'none',
+                  }}>
+                    {fmt12(hourStr)}
+                  </div>
+
+                  {/* Right: Slot Contents & Drop/Tap Area */}
+                  <div
+                    onClick={(e) => {
+                      if (e.target === e.currentTarget) {
+                        openScheduleAtHour(hourStr);
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      position: 'relative',
+                      padding: '6px 12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 6,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {/* Render LIVE NOW indicator line inside current hour */}
+                    {isCurrentHour && (
+                      <div
+                        ref={nowMarkerRef}
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          right: 0,
+                          top: `${(currentM / 60) * 100}%`,
+                          zIndex: 15,
+                          pointerEvents: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div style={{
+                          position: 'absolute',
+                          left: -6,
+                          width: 12,
+                          height: 12,
+                          borderRadius: '50%',
+                          background: '#ef4444',
+                          boxShadow: '0 0 8px #ef4444',
+                          border: '2px solid #fff',
+                        }} />
+                        <div style={{
+                          flex: 1,
+                          height: 2,
+                          background: '#ef4444',
+                          boxShadow: '0 0 6px rgba(239, 68, 68, 0.4)',
+                        }} />
+                        <span style={{
+                          background: '#ef4444',
+                          color: '#fff',
+                          fontSize: 9,
+                          fontWeight: 900,
+                          padding: '1px 6px',
+                          borderRadius: 4,
+                          marginLeft: 4,
+                          letterSpacing: '0.4px',
+                        }}>
+                          NOW {displayTime}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Scheduled Items in this hour */}
+                    {hourItems.map(item => {
+                      const typeCfg = TYPE_CONFIG[item.type] || TYPE_CONFIG.task;
+                      return (
+                        <div
+                          key={item.id}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, item.id)}
+                          style={{
+                            background: item.completed ? 'var(--surface-2)' : 'var(--surface)',
+                            border: `1.5px solid ${item.completed ? 'var(--border)' : (item.color || typeCfg.border)}`,
+                            borderLeftWidth: 4,
+                            borderRadius: 10,
+                            padding: '8px 12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 10,
+                            boxShadow: item.completed ? 'none' : '0 2px 8px rgba(0,0,0,0.06)',
+                            opacity: item.completed ? 0.65 : 1,
+                            cursor: 'grab',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+                            {/* Checkbox */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleTimelineItem(item.id);
+                              }}
+                              style={{
+                                width: 22,
+                                height: 22,
+                                borderRadius: 6,
+                                border: `2px solid ${item.completed ? 'var(--green)' : 'var(--border)'}`,
+                                background: item.completed ? 'var(--green)' : 'transparent',
+                                color: '#fff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 13,
+                                fontWeight: 900,
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                                transition: 'all 0.15s',
+                              }}
+                            >
+                              {item.completed ? '✓' : ''}
+                            </button>
+
+                            {/* Title & metadata */}
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{
+                                fontSize: 13,
+                                fontWeight: 700,
+                                color: item.completed ? 'var(--text-muted)' : 'var(--text)',
+                                textDecoration: item.completed ? 'line-through' : 'none',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}>
+                                {item.title}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, fontSize: 11, color: 'var(--text-muted)' }}>
+                                <span>{fmt12(item.time)}</span>
+                                {item.duration && <span>• {item.duration}m</span>}
+                                {item.notes && <span>• {item.notes}</span>}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Tag & Action Buttons */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                            <span style={{
+                              fontSize: 10,
+                              fontWeight: 800,
+                              textTransform: 'uppercase',
+                              padding: '2px 6px',
+                              borderRadius: 4,
+                              background: typeCfg.bg,
+                              color: item.color || typeCfg.color,
+                            }}>
+                              {typeCfg.label}
+                            </span>
+
+                            {item.link && (
+                              <a
+                                href={item.link}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  color: '#2563eb',
+                                  textDecoration: 'none',
+                                  padding: '2px 6px',
+                                  borderRadius: 4,
+                                  background: 'rgba(37,99,235,0.1)',
+                                }}
+                              >
+                                Join
+                              </a>
+                            )}
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTimelineItem(item.id);
+                              }}
+                              title="Remove from timeline"
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--text-muted)',
+                                fontSize: 14,
+                                cursor: 'pointer',
+                                padding: '2px 4px',
+                                borderRadius: 4,
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Empty placeholder slot hint if nothing in this hour */}
+                    {hourItems.length === 0 && (
+                      <div
+                        style={{
+                          height: '100%',
+                          minHeight: 44,
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: 'var(--text-muted)',
+                          fontSize: 11,
+                          opacity: 0.4,
+                        }}
+                      >
+                        + Tap to schedule
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      )}
 
-      {/* CSS for mobile today grid */}
-      <style jsx global>{`
-        @media (max-width: 768px) {
-          .today-grid {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
+        {/* ── FLOATING SCHEDULE FAB ───────────────────────────────────────────── */}
+        <button
+          onClick={() => openScheduleAtHour(currentTimeStr)}
+          style={{
+            position: 'fixed',
+            bottom: 80,
+            right: 20,
+            zIndex: 50,
+            background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 30,
+            padding: '12px 20px',
+            fontSize: 14,
+            fontWeight: 800,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            boxShadow: '0 8px 24px rgba(99,102,241,0.4)',
+            cursor: 'pointer',
+            transition: 'transform 0.15s ease',
+          }}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <span style={{ fontSize: 18 }}>＋</span>
+          <span>Schedule</span>
+        </button>
 
-      {/* Reminder Center Modal */}
-      <ReminderCenter
-        isOpen={showReminderCenter}
-        onClose={() => setShowReminderCenter(false)}
-        schedule={schedule}
-        tasks={tasks}
-        blockAssignments={blockAssignments}
-        meetings={meetings}
-      />
+        {/* ── SEARCH & SCHEDULE BOTTOM SHEET ─────────────────────────────────── */}
+        {showScheduleDrawer && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(6px)',
+            zIndex: 90,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+          }}
+          onClick={() => setShowScheduleDrawer(false)}
+          >
+            <div
+              style={{
+                background: 'var(--surface)',
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                maxHeight: '85vh',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 -10px 40px rgba(0,0,0,0.3)',
+                padding: '20px 20px 30px 20px',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>
+                    Schedule Item at {fmt12(selectedHourForAdd)}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    Select any task, study topic, or create custom execution item
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowScheduleDrawer(false)}
+                  style={{
+                    background: 'var(--surface-2)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    fontSize: 16,
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Time selector pills */}
+              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 10, marginBottom: 10 }}>
+                {HOURS.map(h => (
+                  <button
+                    key={h}
+                    onClick={() => setSelectedHourForAdd(h)}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 8,
+                      border: '1px solid var(--border)',
+                      background: selectedHourForAdd === h ? 'var(--purple)' : 'var(--surface-2)',
+                      color: selectedHourForAdd === h ? '#fff' : 'var(--text)',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {fmt12(h)}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search input */}
+              <input
+                type="text"
+                placeholder="Search tasks, study topics, projects..."
+                value={drawerSearch}
+                onChange={(e) => setDrawerSearch(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface-2)',
+                  color: 'var(--text)',
+                  fontSize: 14,
+                  marginBottom: 12,
+                  outline: 'none',
+                }}
+              />
+
+              {/* Tabs */}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto' }}>
+                {['all', 'tasks', 'gate', 'college', 'projects'].map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setDrawerTab(tab)}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: 20,
+                      border: '1px solid var(--border)',
+                      background: drawerTab === tab ? 'var(--text)' : 'transparent',
+                      color: drawerTab === tab ? 'var(--bg)' : 'var(--text-muted)',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      textTransform: 'capitalize',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+
+              {/* Items List */}
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '45vh' }}>
+                {/* Custom quick task creator */}
+                {drawerSearch && (
+                  <div style={{
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    background: 'var(--purple-bg)',
+                    border: '1px solid var(--purple)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--purple)' }}>
+                        Add "{drawerSearch}"
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Custom execution session</div>
+                    </div>
+                    <button
+                      onClick={() => handleAddItemToHour({ title: drawerSearch, type: 'task', duration: 60 }, selectedHourForAdd)}
+                      style={{
+                        background: 'var(--purple)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '6px 12px',
+                        fontSize: 12,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ＋ Schedule
+                    </button>
+                  </div>
+                )}
+
+                {/* Tasks */}
+                {(drawerTab === 'all' || drawerTab === 'tasks') && filteredTasks.map(task => (
+                  <div
+                    key={task._id}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      background: 'var(--surface-2)',
+                      border: '1px solid var(--border)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 10,
+                    }}
+                  >
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {task.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                        {task.priority || 'P2'} • {task.project || 'General'}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleAddItemToHour({ ...task, type: 'task' }, selectedHourForAdd)}
+                      style={{
+                        background: 'var(--purple)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '6px 12px',
+                        fontSize: 12,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                    >
+                      ＋ Schedule
+                    </button>
+                  </div>
+                ))}
+
+                {/* GATE */}
+                {(drawerTab === 'all' || drawerTab === 'gate') && filteredGate.map(g => (
+                  <div
+                    key={g._id || g.name}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      background: 'var(--surface-2)',
+                      border: '1px solid var(--border)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 10,
+                    }}
+                  >
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        GATE: {g.name}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                        {g.code || 'Study Block'} • Weight: {g.weightage || 'High'}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleAddItemToHour({ title: `GATE Study: ${g.name}`, type: 'gate', duration: 90, color: '#3b82f6' }, selectedHourForAdd)}
+                      style={{
+                        background: '#3b82f6',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '6px 12px',
+                        fontSize: 12,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                    >
+                      ＋ Schedule
+                    </button>
+                  </div>
+                ))}
+
+                {/* College */}
+                {(drawerTab === 'all' || drawerTab === 'college') && filteredCollege.map(c => (
+                  <div
+                    key={c._id || c.name}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      background: 'var(--surface-2)',
+                      border: '1px solid var(--border)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 10,
+                    }}
+                  >
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        College: {c.name}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                        {c.code || 'Academic'} • Attendance: {c.attendance || '--'}%
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleAddItemToHour({ title: `College: ${c.name}`, type: 'college', duration: 60, color: '#f59e0b' }, selectedHourForAdd)}
+                      style={{
+                        background: '#f59e0b',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '6px 12px',
+                        fontSize: 12,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                    >
+                      ＋ Schedule
+                    </button>
+                  </div>
+                ))}
+
+                {/* Projects */}
+                {(drawerTab === 'all' || drawerTab === 'projects') && filteredProjects.map(p => (
+                  <div
+                    key={p._id || p.name}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      background: 'var(--surface-2)',
+                      border: '1px solid var(--border)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 10,
+                    }}
+                  >
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        Project: {p.name}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                        {p.status || 'Active'} • {p.description || 'Sprint focus'}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleAddItemToHour({ title: `Work: ${p.name}`, type: 'forge', duration: 120, color: '#ec4899' }, selectedHourForAdd)}
+                      style={{
+                        background: '#ec4899',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '6px 12px',
+                        fontSize: 12,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                    >
+                      ＋ Schedule
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── QUICK NOTE OVERLAY ──────────────────────────────────────────────── */}
+        {showNotepad && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}>
+            <div style={{
+              width: '100%',
+              maxWidth: 600,
+              height: '80vh',
+              background: 'var(--surface)',
+              borderRadius: 16,
+              border: '1px solid var(--border)',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                padding: '14px 18px',
+                borderBottom: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'var(--surface-2)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 18 }}>📝</span>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>Today Quick Note</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Auto-saved instantly to local storage</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowNotepad(false)}
+                  style={{
+                    background: 'var(--purple)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '6px 14px',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Done
+                </button>
+              </div>
+
+              <textarea
+                ref={noteRef}
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder="Jot down quick thoughts, scratchpad calculations, meeting notes, links..."
+                style={{
+                  flex: 1,
+                  padding: 18,
+                  background: 'transparent',
+                  color: 'var(--text)',
+                  fontSize: 14,
+                  lineHeight: '1.6',
+                  fontFamily: 'monospace',
+                  border: 'none',
+                  outline: 'none',
+                  resize: 'none',
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── REMINDER CENTER MODAL ───────────────────────────────────────────── */}
+        {showReminderCenter && (
+          <ReminderCenter
+            onClose={() => setShowReminderCenter(false)}
+            tasks={tasks}
+            meetings={meetings}
+            gateTopics={gateSubjects}
+          />
+        )}
+      </div>
     </AppShell>
   );
 }
