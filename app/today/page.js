@@ -68,6 +68,28 @@ export default function TodayPage() {
     color: '#ec4899',
   });
 
+  // Notepad state
+  const [showNotepad, setShowNotepad] = useState(false);
+  const [noteText, setNoteText] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('ops_today_quicknote') || '';
+    }
+    return '';
+  });
+  const noteRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ops_today_quicknote', noteText);
+    }
+  }, [noteText]);
+
+  useEffect(() => {
+    if (showNotepad && noteRef.current) {
+      noteRef.current.focus();
+    }
+  }, [showNotepad]);
+
   // Current time state for live NOW line
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -317,6 +339,14 @@ export default function TodayPage() {
           <button
             className="btn btn-secondary btn-sm"
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={() => setShowNotepad(true)}
+          >
+            <span>📝</span> Quick Note
+          </button>
+
+          <button
+            className="btn btn-secondary btn-sm"
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             onClick={() => setShowReminderCenter(true)}
           >
             <span>🔔</span> Reminders
@@ -367,6 +397,7 @@ export default function TodayPage() {
             gap: 20,
             alignItems: 'start',
           }}
+          className="today-grid"
         >
           {/* LEFT PANEL: TASK POOL & MITs */}
           {(viewMode === 'split' || viewMode === 'tasks') && (
@@ -768,6 +799,127 @@ export default function TodayPage() {
           </div>
         </div>
       )}
+
+      {/* Fullscreen Notepad Overlay */}
+      {showNotepad && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 300,
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'var(--bg)',
+        }}>
+          {/* Notepad Toolbar */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '12px 16px',
+            borderBottom: '1px solid var(--border)',
+            background: 'var(--surface)',
+            flexShrink: 0,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 18 }}>📝</span>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 800 }}>Quick Note</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                  {noteText.length} chars · Auto-saved
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => setNoteText('')}
+                style={{
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  padding: '6px 12px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                }}
+              >
+                Clear
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard?.writeText(noteText).catch(() => {});
+                }}
+                style={{
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  padding: '6px 12px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: 'var(--text)',
+                  cursor: 'pointer',
+                }}
+              >
+                Copy
+              </button>
+              <button
+                onClick={() => setShowNotepad(false)}
+                style={{
+                  background: 'var(--accent)',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '6px 16px',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: '#fff',
+                  cursor: 'pointer',
+                }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+
+          {/* The actual text area — full screen like notepad */}
+          <textarea
+            ref={noteRef}
+            value={noteText}
+            onChange={e => setNoteText(e.target.value)}
+            placeholder={`Start typing your note...\n\nIdeas, thoughts, todos, anything.\nThis saves automatically.`}
+            style={{
+              flex: 1,
+              width: '100%',
+              padding: '20px 24px',
+              background: 'var(--bg)',
+              color: 'var(--text)',
+              border: 'none',
+              outline: 'none',
+              resize: 'none',
+              fontSize: 16,
+              lineHeight: 1.8,
+              fontFamily: "'Courier New', 'Consolas', monospace",
+              letterSpacing: '0.01em',
+              caretColor: 'var(--accent)',
+              WebkitOverflowScrolling: 'touch',
+            }}
+            spellCheck
+            autoCorrect="on"
+            autoCapitalize="sentences"
+          />
+
+          {/* Bottom safe area spacer for mobile */}
+          <div style={{ height: 'env(safe-area-inset-bottom)', background: 'var(--surface)', flexShrink: 0 }} />
+        </div>
+      )}
+
+      {/* CSS for mobile today grid */}
+      <style jsx global>{`
+        @media (max-width: 768px) {
+          .today-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
 
       {/* Reminder Center Modal */}
       <ReminderCenter
