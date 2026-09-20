@@ -28,6 +28,8 @@ function Icon({ name, size = 20 }) {
     more: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>,
     check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20,6 9,17 4,12"/></svg>,
     bell: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+    sun: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
+    moon: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
   };
   return icons[name] || null;
 }
@@ -118,32 +120,104 @@ function GlobalSearch() {
   }, []);
 
   const TYPE_ROUTES = {
-    task: '/tasks', meeting: '/meetings', person: '/people', project: '/projects',
-    note: '/learning', decision: '/reviews', gate: '/gate', college: '/college', forge: '/forge', book: '/books',
-  };
-
-  const handleResult = (item) => {
-    setOpen(false); setQ('');
-    router.push(TYPE_ROUTES[item._type] || '/');
+    task: '/tasks',
+    person: '/people',
+    meeting: '/meetings',
+    gate_topic: '/gate',
+    college_subject: '/college',
+    project: '/projects',
+    book: '/books',
+    learning_note: '/learning',
+    habit: '/life',
+    weekly_review: '/reviews',
   };
 
   return (
-    <div className="search-bar" ref={ref} style={{ marginBottom: 0 }}>
-      <span className="search-icon"><Icon name="search" size={16} /></span>
-      <input
-        className="input search-input"
-        placeholder="Search everything..."
-        value={q}
-        onChange={e => setQ(e.target.value)}
-        onFocus={() => results.length > 0 && setOpen(true)}
-        style={{ fontSize: 13, padding: '8px 12px 8px 36px' }}
-      />
+    <div ref={ref} style={{ position: 'relative', width: '100%' }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        background: 'var(--surface-2)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--r-md)',
+        padding: '6px 10px',
+      }}>
+        <Icon name="search" size={15} />
+        <input
+          type="text"
+          value={q}
+          onChange={e => setQ(e.target.value)}
+          placeholder="Search everything... (Ctrl+K)"
+          style={{
+            border: 'none',
+            background: 'transparent',
+            fontSize: 13,
+            width: '100%',
+            color: 'var(--text)',
+          }}
+        />
+        {q && (
+          <button onClick={() => { setQ(''); setOpen(false); }} style={{ color: 'var(--text-muted)' }}>
+            <Icon name="x" size={13} />
+          </button>
+        )}
+      </div>
+
       {open && results.length > 0 && (
-        <div className="search-results">
-          {results.map((item, i) => (
-            <div key={i} className="search-result-item" onClick={() => handleResult(item)}>
-              <span className="search-result-type">{item._type}</span>
-              <span className="search-result-name">{item.name || item.title || item.decision || item.problem}</span>
+        <div style={{
+          position: 'absolute',
+          top: 'calc(100% + 4px)',
+          left: 0,
+          right: 0,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--r-md)',
+          boxShadow: 'var(--shadow-lg)',
+          zIndex: 100,
+          maxHeight: 320,
+          overflowY: 'auto',
+        }}>
+          {results.map(r => (
+            <div
+              key={`${r.type}-${r._id}`}
+              onClick={() => {
+                const route = TYPE_ROUTES[r.type] || '/';
+                router.push(route);
+                setOpen(false);
+                setQ('');
+              }}
+              style={{
+                padding: '8px 12px',
+                borderBottom: '1px solid var(--border-subtle)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+              className="search-item"
+            >
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>
+                  {r.title || r.name || r.topic}
+                </div>
+                {r.preview && (
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                    {r.preview.slice(0, 60)}
+                  </div>
+                )}
+              </div>
+              <span style={{
+                fontSize: 10,
+                color: 'var(--text-muted)',
+                background: 'var(--surface-2)',
+                padding: '2px 6px',
+                borderRadius: 'var(--r-sm)',
+                textTransform: 'uppercase',
+                fontWeight: 600,
+              }}>
+                {r.type}
+              </span>
             </div>
           ))}
         </div>
@@ -159,6 +233,20 @@ export default function AppShell({ children, overdueBadge = 0 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [showReminders, setShowReminders] = useState(false);
+  const [theme, setTheme] = useState('dark');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('ops_theme') || 'dark';
+    setTheme(saved);
+    document.documentElement.setAttribute('data-theme', saved);
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('ops_theme', nextTheme);
+    document.documentElement.setAttribute('data-theme', nextTheme);
+  };
 
   const isActive = (href) => href === '/' ? pathname === '/' : pathname.startsWith(href);
 
@@ -181,9 +269,29 @@ export default function AppShell({ children, overdueBadge = 0 }) {
       {/* ── Side Nav (desktop) ── */}
       <nav className="side-nav">
         <div className="side-nav-header">
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <Logo size="md" />
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Link href="/" style={{ textDecoration: 'none' }}>
+              <Logo size="md" />
+            </Link>
+            <button
+              onClick={toggleTheme}
+              style={{
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                width: 30,
+                height: 30,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text)',
+                cursor: 'pointer',
+              }}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            >
+              <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={15} />
+            </button>
+          </div>
           <div style={{ marginTop: 12 }}>
             <GlobalSearch />
           </div>
@@ -318,17 +426,38 @@ export default function AppShell({ children, overdueBadge = 0 }) {
             zIndex: 201,
             background: 'var(--surface)',
             borderRadius: '20px 20px 0 0',
-            padding: '20px 16px 32px',
+            padding: '20px 16px calc(32px + env(safe-area-inset-bottom, 0px))',
             boxShadow: '0 -8px 40px rgba(0,0,0,0.3)',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <span style={{ fontSize: 16, fontWeight: 800 }}>More</span>
-              <button
-                onClick={() => setMoreMenuOpen(false)}
-                style={{ background: 'var(--surface-2)', border: 'none', borderRadius: 20, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)' }}
-              >
-                ✕
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>More & Preferences</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  onClick={toggleTheme}
+                  style={{
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 20,
+                    padding: '6px 12px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    color: 'var(--text)',
+                  }}
+                >
+                  <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={14} />
+                  <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+                </button>
+                <button
+                  onClick={() => setMoreMenuOpen(false)}
+                  style={{ background: 'var(--surface-2)', border: 'none', borderRadius: 20, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)' }}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
               {MORE_ITEMS.map(item => (
@@ -345,8 +474,8 @@ export default function AppShell({ children, overdueBadge = 0 }) {
                     borderRadius: 12,
                     background: isActive(item.href) ? 'var(--accent-bg)' : 'var(--surface-2)',
                     textDecoration: 'none',
-                    color: isActive(item.href) ? 'var(--accent)' : 'var(--text)',
-                    border: isActive(item.href) ? '1px solid var(--accent)' : '1px solid transparent',
+                    color: isActive(item.href) ? 'var(--purple)' : 'var(--text)',
+                    border: isActive(item.href) ? '1px solid var(--purple)' : '1px solid transparent',
                     transition: 'all 0.15s ease',
                   }}
                 >

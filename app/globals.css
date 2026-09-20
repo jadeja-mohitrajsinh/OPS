@@ -4,9 +4,11 @@
 :root {
   --font: 'Inter', -apple-system, sans-serif;
 
-  /* Colors */
+  /* Light Theme Colors (Default) */
   --bg: #f8f8f6;
+  --bg-rgb: 248, 248, 246;
   --surface: #ffffff;
+  --surface-rgb: 255, 255, 255;
   --surface-2: #f2f2ef;
   --border: #e8e8e4;
   --border-subtle: #f0f0ec;
@@ -30,6 +32,7 @@
 
   --accent: #1a1a18;
   --accent-hover: #333330;
+  --accent-bg: #f2f2ef;
 
   /* Spacing */
   --space-1: 4px;
@@ -58,6 +61,43 @@
   --bottom-nav-h: calc(64px + env(safe-area-inset-bottom, 0px));
   --header-h: 56px;
 }
+
+/* ─── Dark Theme ─────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg: #0c0e17;
+  --bg-rgb: 12, 14, 23;
+  --surface: #141724;
+  --surface-rgb: 20, 23, 36;
+  --surface-2: #1c2033;
+  --border: #282f49;
+  --border-subtle: #20263b;
+
+  --text: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --red: #f87171;
+  --red-bg: rgba(239, 68, 68, 0.15);
+  --orange: #fb923c;
+  --orange-bg: rgba(249, 115, 22, 0.15);
+  --yellow: #facc15;
+  --yellow-bg: rgba(234, 179, 8, 0.15);
+  --green: #34d399;
+  --green-bg: rgba(16, 185, 129, 0.15);
+  --blue: #60a5fa;
+  --blue-bg: rgba(59, 130, 246, 0.15);
+  --purple: #a78bfa;
+  --purple-bg: rgba(139, 92, 246, 0.15);
+
+  --accent: #f1f5f9;
+  --accent-hover: #e2e8f0;
+  --accent-bg: rgba(241, 245, 249, 0.12);
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.5);
+}
+
 
 /* ─── Reset ─────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

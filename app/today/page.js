@@ -294,7 +294,7 @@ export default function TodayExecutionPage() {
           zIndex: 40,
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          background: 'rgba(var(--surface-rgb, 18, 18, 20), 0.85)',
+          background: 'var(--surface)',
           borderBottom: '1px solid var(--border)',
           margin: '-16px -16px 16px -16px',
           padding: '12px 16px',
