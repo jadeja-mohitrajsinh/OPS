@@ -911,16 +911,17 @@ export default function TodayExecutionPage() {
                     key={tab}
                     onClick={() => setDrawerTab(tab)}
                     style={{
-                      padding: '4px 12px',
+                      padding: '5px 14px',
                       borderRadius: 20,
-                      border: '1px solid var(--border)',
-                      background: drawerTab === tab ? 'var(--text)' : 'transparent',
-                      color: drawerTab === tab ? 'var(--bg)' : 'var(--text-muted)',
+                      border: drawerTab === tab ? '1px solid var(--purple)' : '1px solid var(--border)',
+                      background: drawerTab === tab ? 'var(--purple)' : 'var(--surface-2)',
+                      color: drawerTab === tab ? '#ffffff' : 'var(--text-muted)',
                       fontSize: 12,
-                      fontWeight: 700,
+                      fontWeight: 800,
                       textTransform: 'capitalize',
                       cursor: 'pointer',
                       flexShrink: 0,
+                      transition: 'all 0.15s ease',
                     }}
                   >
                     {tab}

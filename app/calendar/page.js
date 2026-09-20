@@ -290,15 +290,16 @@ export default function CalendarPlanningPage() {
               <button
                 onClick={() => setViewMode('month')}
                 style={{
-                  padding: '6px 12px',
+                  padding: '6px 14px',
                   borderRadius: 7,
                   border: 'none',
-                  background: viewMode === 'month' ? 'var(--surface)' : 'transparent',
-                  color: viewMode === 'month' ? 'var(--text)' : 'var(--text-muted)',
+                  background: viewMode === 'month' ? 'var(--purple)' : 'transparent',
+                  color: viewMode === 'month' ? '#ffffff' : 'var(--text-muted)',
                   fontSize: 12,
                   fontWeight: 800,
                   cursor: 'pointer',
-                  boxShadow: viewMode === 'month' ? '0 2px 6px rgba(0,0,0,0.1)' : 'none',
+                  boxShadow: viewMode === 'month' ? '0 2px 6px rgba(0,0,0,0.2)' : 'none',
+                  transition: 'all 0.15s ease',
                 }}
               >
                 Month
@@ -306,15 +307,16 @@ export default function CalendarPlanningPage() {
               <button
                 onClick={() => setViewMode('week')}
                 style={{
-                  padding: '6px 12px',
+                  padding: '6px 14px',
                   borderRadius: 7,
                   border: 'none',
-                  background: viewMode === 'week' ? 'var(--surface)' : 'transparent',
-                  color: viewMode === 'week' ? 'var(--text)' : 'var(--text-muted)',
+                  background: viewMode === 'week' ? 'var(--purple)' : 'transparent',
+                  color: viewMode === 'week' ? '#ffffff' : 'var(--text-muted)',
                   fontSize: 12,
                   fontWeight: 800,
                   cursor: 'pointer',
-                  boxShadow: viewMode === 'week' ? '0 2px 6px rgba(0,0,0,0.1)' : 'none',
+                  boxShadow: viewMode === 'week' ? '0 2px 6px rgba(0,0,0,0.2)' : 'none',
+                  transition: 'all 0.15s ease',
                 }}
               >
                 Week
@@ -322,15 +324,16 @@ export default function CalendarPlanningPage() {
               <button
                 onClick={() => setViewMode('upcoming')}
                 style={{
-                  padding: '6px 12px',
+                  padding: '6px 14px',
                   borderRadius: 7,
                   border: 'none',
-                  background: viewMode === 'upcoming' ? 'var(--surface)' : 'transparent',
-                  color: viewMode === 'upcoming' ? 'var(--text)' : 'var(--text-muted)',
+                  background: viewMode === 'upcoming' ? 'var(--purple)' : 'transparent',
+                  color: viewMode === 'upcoming' ? '#ffffff' : 'var(--text-muted)',
                   fontSize: 12,
                   fontWeight: 800,
                   cursor: 'pointer',
-                  boxShadow: viewMode === 'upcoming' ? '0 2px 6px rgba(0,0,0,0.1)' : 'none',
+                  boxShadow: viewMode === 'upcoming' ? '0 2px 6px rgba(0,0,0,0.2)' : 'none',
+                  transition: 'all 0.15s ease',
                 }}
               >
                 Upcoming
