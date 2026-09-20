@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OPS</string>
+    <string name="title_activity_main">OPS</string>
+    <string name="package_name">com.mohit.ops</string>
+    <string name="custom_url_scheme">com.mohit.ops</string>
+</resources>

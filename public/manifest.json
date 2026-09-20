@@ -1,0 +1,9 @@
+{
+  "name": "OPS - Personal OS",
+  "short_name": "OPS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f8f6",
+  "theme_color": "#6d28d9",
+  "icons": []
+}

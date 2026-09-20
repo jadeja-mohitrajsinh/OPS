@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import ReminderCenter from '@/components/ReminderCenter';
+import Logo from '@/components/Logo';
 
 // ── Icons ───────────────────────────────────────────────────────────
 function Icon({ name, size = 20 }) {
@@ -25,6 +27,7 @@ function Icon({ name, size = 20 }) {
     x: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
     more: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>,
     check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20,6 9,17 4,12"/></svg>,
+    bell: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
   };
   return icons[name] || null;
 }
@@ -155,16 +158,32 @@ export default function AppShell({ children, overdueBadge = 0 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [showReminders, setShowReminders] = useState(false);
 
   const isActive = (href) => href === '/' ? pathname === '/' : pathname.startsWith(href);
+
+  const MORE_ITEMS = [
+    { href: '/meetings', label: 'Meetings', icon: 'meetings', emoji: '👥' },
+    { href: '/people', label: 'People', icon: 'people', emoji: '👤' },
+    { href: '/projects', label: 'Projects', icon: 'projects', emoji: '📊' },
+    { href: '/forge', label: 'Forge', icon: 'forge', emoji: '⚡' },
+    { href: '/gate', label: 'GATE 2027', icon: 'gate', emoji: '🎓' },
+    { href: '/college', label: 'College', icon: 'college', emoji: '🏫' },
+    { href: '/learning', label: 'Learning', icon: 'learning', emoji: '📖' },
+    { href: '/books', label: 'Books', icon: 'books', emoji: '📚' },
+    { href: '/life', label: 'Life', icon: 'life', emoji: '❤️' },
+    { href: '/reviews', label: 'Reviews', icon: 'reviews', emoji: '📋' },
+  ];
 
   return (
     <div className="app-shell">
       {/* ── Side Nav (desktop) ── */}
       <nav className="side-nav">
         <div className="side-nav-header">
-          <div className="side-nav-logo">OPS</div>
-          <div className="side-nav-sub">Personal Operating System</div>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <Logo size="md" />
+          </Link>
           <div style={{ marginTop: 12 }}>
             <GlobalSearch />
           </div>
@@ -190,7 +209,23 @@ export default function AppShell({ children, overdueBadge = 0 }) {
           ))}
         </div>
         <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', fontSize: 11, color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>GATE in ~134 days</span>
+          <button
+            onClick={() => setShowReminders(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--purple)',
+              cursor: 'pointer',
+              fontSize: 11,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+            title="Open Reminder Center"
+          >
+            <Icon name="bell" size={14} /> Alerts
+          </button>
           <button
             onClick={async () => {
               await fetch('/api/auth/logout', { method: 'POST' });
@@ -258,13 +293,74 @@ export default function AppShell({ children, overdueBadge = 0 }) {
             {item.label}
           </Link>
         ))}
-        <Link href="/tasks" className={`nav-item ${isActive('/gate') || isActive('/college') || isActive('/forge') || isActive('/people') || isActive('/meetings') ? 'active' : ''}`} onClick={(e) => {
-          // Open a simple more menu on mobile
-        }}>
+        <button
+          className={`nav-item ${MORE_ITEMS.some(i => isActive(i.href)) ? 'active' : ''}`}
+          onClick={() => setMoreMenuOpen(true)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', font: 'inherit' }}
+        >
           <Icon name="more" size={22} />
           More
-        </Link>
+        </button>
       </nav>
+
+      {/* ── More Menu Overlay (mobile) ── */}
+      {moreMenuOpen && (
+        <>
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setMoreMenuOpen(false)}
+          />
+          <div style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 201,
+            background: 'var(--surface)',
+            borderRadius: '20px 20px 0 0',
+            padding: '20px 16px 32px',
+            boxShadow: '0 -8px 40px rgba(0,0,0,0.3)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <span style={{ fontSize: 16, fontWeight: 800 }}>More</span>
+              <button
+                onClick={() => setMoreMenuOpen(false)}
+                style={{ background: 'var(--surface-2)', border: 'none', borderRadius: 20, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)' }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              {MORE_ITEMS.map(item => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMoreMenuOpen(false)}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '12px 8px',
+                    borderRadius: 12,
+                    background: isActive(item.href) ? 'var(--accent-bg)' : 'var(--surface-2)',
+                    textDecoration: 'none',
+                    color: isActive(item.href) ? 'var(--accent)' : 'var(--text)',
+                    border: isActive(item.href) ? '1px solid var(--accent)' : '1px solid transparent',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: 22 }}>{item.emoji}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, textAlign: 'center', lineHeight: 1.2 }}>{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Global Reminder Center Modal ── */}
+      <ReminderCenter isOpen={showReminders} onClose={() => setShowReminders(false)} />
     </div>
   );
 }

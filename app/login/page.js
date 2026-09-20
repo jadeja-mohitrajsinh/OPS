@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Logo from '@/components/Logo';
 
 export default function LoginPage() {
   const [password, setPassword] = useState('');
@@ -60,24 +61,10 @@ export default function LoginPage() {
           gap: 20,
         }}
       >
-        <div style={{ textAlign: 'center' }}>
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: 14,
-              background: 'var(--surface-2)',
-              border: '1px solid var(--border)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 26,
-              margin: '0 auto 16px',
-            }}
-          >
-            🔒
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ marginBottom: 12 }}>
+            <Logo size="lg" />
           </div>
-          <h1 style={{ fontSize: 22, fontWeight: 900, letterSpacing: '-0.5px' }}>OPS</h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
             Enter your master password to access your dashboard
           </p>

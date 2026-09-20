@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import Link from 'next/link';
+import ReminderCenter from '@/components/ReminderCenter';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -15,7 +16,7 @@ const ALL_HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'
 const CATEGORIES = [
   { id: 'all', label: 'All Items' },
   { id: 'meetings', label: 'Meetings' },
-  { id: 'study', label: 'Study & Academics' },
+  { id: 'study', label: 'Study' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'projects', label: 'Projects' },
 ];
@@ -40,6 +41,9 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(() => formatDate(today.getFullYear(), today.getMonth(), today.getDate()));
   const [showFullDay, setShowFullDay] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Mobile active tab: 'timeline' | 'month' | 'tray'
+  const [mobileTab, setMobileTab] = useState('timeline');
 
   // Data fetching states
   const [meetings, setMeetings] = useState([]);
@@ -70,6 +74,7 @@ export default function CalendarPage() {
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
+  const [showReminderCenter, setShowReminderCenter] = useState(false);
   const [editingBlock, setEditingBlock] = useState(null);
   const [modalData, setModalData] = useState({
     title: '',
@@ -222,6 +227,30 @@ export default function CalendarPage() {
     setDraggedItem(null);
   }
 
+  // Quick schedule item from tray
+  function scheduleItemDirectly(item, category) {
+    const defaultStart = '09:00';
+    const defaultEnd = '10:00';
+    const newBlock = {
+      id: `blk_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      title: item.title || item.name || 'Scheduled Slot',
+      startTime: defaultStart,
+      endTime: defaultEnd,
+      category: category || 'task',
+      notes: item.notes || item.area || '',
+      completed: false,
+    };
+
+    setScheduledBlocks(prev => {
+      const current = prev[selectedDate] || [];
+      return {
+        ...prev,
+        [selectedDate]: [...current, newBlock].sort((a, b) => a.startTime.localeCompare(b.startTime)),
+      };
+    });
+    setMobileTab('timeline');
+  }
+
   // Modal actions
   function openAddModal(hour = '09:00') {
     const startH = parseInt(hour.split(':')[0], 10);
@@ -316,50 +345,113 @@ export default function CalendarPage() {
 
   return (
     <AppShell>
-      {/* Page Header */}
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+      {/* ── Page Header ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 className="page-title">Calendar</h1>
-          <p className="page-subtitle">
-            {selectedDateObject.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-            {isToday && <span style={{ marginLeft: 8, color: 'var(--green)', fontWeight: 600 }}>• Today</span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 22 }}>📅</span>
+            <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px' }}>Master Calendar</h1>
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
+            {selectedDateObject.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+            {isToday && <span style={{ marginLeft: 6, color: 'var(--green)', fontWeight: 700 }}>• Today</span>}
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        {/* Action Controls */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            className="btn btn-secondary btn-sm"
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={() => setShowReminderCenter(true)}
+          >
+            <span>🔔</span> Reminders
+          </button>
           <button className="btn btn-secondary btn-sm" onClick={goToToday}>Today</button>
           <button className="btn btn-primary btn-sm" onClick={() => openAddModal('09:00')}>+ Add Event</button>
         </div>
       </div>
 
-      {/* Main 3-Column Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr 320px', gap: 24, alignItems: 'start' }}>
+      {/* ── Mobile View Tabs (Visible on screens <= 900px) ── */}
+      <div className="calendar-mobile-tabs" style={{ display: 'none', gap: 6, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
+        <button
+          onClick={() => setMobileTab('timeline')}
+          style={{
+            flex: 1,
+            padding: '8px 12px',
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 700,
+            border: 'none',
+            cursor: 'pointer',
+            background: mobileTab === 'timeline' ? 'var(--text)' : 'var(--surface-2)',
+            color: mobileTab === 'timeline' ? 'var(--bg)' : 'var(--text-secondary)',
+          }}
+        >
+          ⏰ Day Timeline ({dayMeetings.length + dayBlocks.length})
+        </button>
+        <button
+          onClick={() => setMobileTab('month')}
+          style={{
+            flex: 1,
+            padding: '8px 12px',
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 700,
+            border: 'none',
+            cursor: 'pointer',
+            background: mobileTab === 'month' ? 'var(--text)' : 'var(--surface-2)',
+            color: mobileTab === 'month' ? 'var(--bg)' : 'var(--text-secondary)',
+          }}
+        >
+          📅 Month Picker
+        </button>
+        <button
+          onClick={() => setMobileTab('tray')}
+          style={{
+            flex: 1,
+            padding: '8px 12px',
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 700,
+            border: 'none',
+            cursor: 'pointer',
+            background: mobileTab === 'tray' ? 'var(--text)' : 'var(--surface-2)',
+            color: mobileTab === 'tray' ? 'var(--bg)' : 'var(--text-secondary)',
+          }}
+        >
+          📚 Items Tray
+        </button>
+      </div>
+
+      {/* Responsive layout container */}
+      <div className="calendar-responsive-grid">
         
-        {/* LEFT COLUMN: Month Calendar & Day Picker */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="card" style={{ padding: 16 }}>
+        {/* ── LEFT COLUMN: Month Calendar & Day Picker ── */}
+        <div className={`calendar-col-month ${mobileTab === 'month' ? 'mobile-visible' : 'mobile-hidden'}`} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="card" style={{ padding: 14 }}>
             {/* Month Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <span style={{ fontSize: 14, fontWeight: 700 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <span style={{ fontSize: 14, fontWeight: 800 }}>
                 {MONTH_NAMES[viewMonth]} {viewYear}
               </span>
               <div style={{ display: 'flex', gap: 4 }}>
-                <button className="btn btn-ghost btn-sm" onClick={prevMonth} style={{ padding: '2px 8px' }}>‹</button>
-                <button className="btn btn-ghost btn-sm" onClick={nextMonth} style={{ padding: '2px 8px' }}>›</button>
+                <button className="btn btn-ghost btn-sm" onClick={prevMonth} style={{ padding: '4px 10px', fontSize: 14 }}>‹</button>
+                <button className="btn btn-ghost btn-sm" onClick={nextMonth} style={{ padding: '4px 10px', fontSize: 14 }}>›</button>
               </div>
             </div>
 
             {/* Weekday labels */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 6, textAlign: 'center' }}>
               {DAY_LABELS.map(d => (
-                <div key={d} style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>{d}</div>
+                <div key={d} style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>{d}</div>
               ))}
             </div>
 
             {/* Calendar grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 }}>
               {calendarGrid.map((day, idx) => {
-                if (!day) return <div key={`empty_${idx}`} style={{ height: 32 }} />;
+                if (!day) return <div key={`empty_${idx}`} style={{ height: 36 }} />;
 
                 const cellKey = formatDate(viewYear, viewMonth, day);
                 const isSelected = selectedDate === cellKey;
@@ -369,14 +461,17 @@ export default function CalendarPage() {
                 return (
                   <button
                     key={`day_${day}`}
-                    onClick={() => setSelectedDate(cellKey)}
+                    onClick={() => {
+                      setSelectedDate(cellKey);
+                      setMobileTab('timeline'); // Switch straight to timeline on mobile selection
+                    }}
                     style={{
-                      height: 32,
-                      borderRadius: 'var(--r-sm)',
-                      border: isSelected ? '1px solid var(--accent)' : '1px solid transparent',
-                      background: isSelected ? 'var(--surface-2)' : isCurrentToday ? 'var(--blue-bg)' : 'transparent',
-                      color: isCurrentToday ? 'var(--blue)' : 'var(--text)',
-                      fontWeight: isSelected || isCurrentToday ? 700 : 400,
+                      height: 36,
+                      borderRadius: 8,
+                      border: isSelected ? '1.5px solid var(--accent)' : '1px solid transparent',
+                      background: isSelected ? 'var(--text)' : isCurrentToday ? 'var(--blue-bg)' : 'var(--surface-2)',
+                      color: isSelected ? 'var(--bg)' : isCurrentToday ? 'var(--blue)' : 'var(--text)',
+                      fontWeight: isSelected || isCurrentToday ? 800 : 500,
                       fontSize: 12,
                       cursor: 'pointer',
                       display: 'flex',
@@ -393,9 +488,9 @@ export default function CalendarPage() {
                           width: 4,
                           height: 4,
                           borderRadius: '50%',
-                          background: counts.meetings > 0 ? 'var(--blue)' : counts.tasks > 0 ? 'var(--orange)' : 'var(--purple)',
+                          background: isSelected ? '#38bdf8' : counts.meetings > 0 ? 'var(--blue)' : counts.tasks > 0 ? 'var(--orange)' : 'var(--purple)',
                           position: 'absolute',
-                          bottom: 2,
+                          bottom: 3,
                         }}
                       />
                     )}
@@ -406,222 +501,246 @@ export default function CalendarPage() {
           </div>
 
           {/* Selected Date Metric Card */}
-          <div className="card" style={{ padding: 16 }}>
-            <div className="section-label" style={{ marginBottom: 8 }}>Day Summary</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
+          <div className="card" style={{ padding: 14 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8 }}>
+              Day Summary ({selectedDate})
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span className="text-secondary">Meetings</span>
-                <strong>{dayMeetings.length}</strong>
+                <strong style={{ color: 'var(--blue)' }}>{dayMeetings.length}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span className="text-secondary">Tasks Due</span>
-                <strong>{dayTasks.length}</strong>
+                <strong style={{ color: 'var(--orange)' }}>{dayTasks.length}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span className="text-secondary">Scheduled Blocks</span>
-                <strong>{dayBlocks.length}</strong>
+                <strong style={{ color: 'var(--purple)' }}>{dayBlocks.length}</strong>
               </div>
             </div>
           </div>
         </div>
 
-        {/* CENTER COLUMN: Day Hours Timeline */}
-        <div className="card" style={{ padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>
-              Timeline ({selectedDateObject.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
-            </div>
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={() => setShowFullDay(!showFullDay)}
-              style={{ fontSize: 11 }}
-            >
-              {showFullDay ? 'Show 06:00 – 23:00' : 'Show 24 Hours'}
-            </button>
-          </div>
+        {/* ── CENTER COLUMN: Day Hours Timeline ── */}
+        <div className={`calendar-col-timeline ${mobileTab === 'timeline' ? 'mobile-visible' : 'mobile-hidden'}`} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="card" style={{ padding: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 800 }}>
+                  Timeline · {selectedDateObject.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                  {dayMeetings.length + dayBlocks.length} events scheduled
+                </div>
+              </div>
 
-          {/* Hour by hour schedule */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, position: 'relative' }}>
-            {hoursToDisplay.map(hour => {
-              const hourPrefix = hour.slice(0, 2);
-              const isOver = dragOverHour === hour;
-              const isCurrentHour = isToday && currentHourString === hourPrefix;
-
-              const matchedMeetings = dayMeetings.filter(m => m.startTime && m.startTime.slice(0, 2) === hourPrefix);
-              const matchedBlocks = dayBlocks.filter(b => b.startTime && b.startTime.slice(0, 2) === hourPrefix);
-
-              return (
-                <div
-                  key={hour}
-                  onDragOver={e => handleDragOver(e, hour)}
-                  onDragLeave={e => handleDragLeave(e, hour)}
-                  onDrop={e => handleDrop(e, hour)}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '56px 1fr',
-                    borderTop: '1px solid var(--border-subtle)',
-                    minHeight: 48,
-                    position: 'relative',
-                  }}
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setShowFullDay(!showFullDay)}
+                  style={{ fontSize: 11 }}
                 >
-                  {/* Time label */}
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', paddingTop: 6, fontVariantNumeric: 'tabular-nums' }}>
-                    {hour}
-                  </div>
+                  {showFullDay ? '06:00 – 23:00' : '24 Hours'}
+                </button>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => openAddModal('09:00')}
+                  style={{ fontSize: 11 }}
+                >
+                  + Block
+                </button>
+              </div>
+            </div>
 
-                  {/* Hour slot content */}
+            {/* Hour by hour schedule */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0, position: 'relative' }}>
+              {hoursToDisplay.map(hour => {
+                const hourPrefix = hour.slice(0, 2);
+                const isOver = dragOverHour === hour;
+                const isCurrentHour = isToday && currentHourString === hourPrefix;
+
+                const matchedMeetings = dayMeetings.filter(m => m.startTime && m.startTime.slice(0, 2) === hourPrefix);
+                const matchedBlocks = dayBlocks.filter(b => b.startTime && b.startTime.slice(0, 2) === hourPrefix);
+
+                return (
                   <div
+                    key={hour}
+                    onDragOver={e => handleDragOver(e, hour)}
+                    onDragLeave={e => handleDragLeave(e, hour)}
+                    onDrop={e => handleDrop(e, hour)}
                     style={{
-                      padding: '4px 8px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 6,
-                      background: isOver ? 'var(--blue-bg)' : 'transparent',
-                      transition: 'background 0.1s ease',
+                      display: 'grid',
+                      gridTemplateColumns: '52px 1fr',
+                      borderTop: '1px solid var(--border-subtle)',
+                      minHeight: 46,
                       position: 'relative',
                     }}
                   >
-                    {/* Live line indicator for current minute */}
-                    {isCurrentHour && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          left: 0,
-                          right: 0,
-                          top: `${(currentMinute / 60) * 100}%`,
-                          height: 1.5,
-                          background: 'var(--red)',
-                          zIndex: 5,
-                        }}
-                      />
-                    )}
+                    {/* Time label */}
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', paddingTop: 6, fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
+                      {hour}
+                    </div>
 
-                    {/* Render Meetings from DB */}
-                    {matchedMeetings.map(m => (
-                      <Link key={`m_${m._id}`} href={`/meetings/${m._id}`}>
+                    {/* Hour slot content */}
+                    <div
+                      style={{
+                        padding: '4px 6px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 6,
+                        background: isOver ? 'var(--blue-bg)' : 'transparent',
+                        transition: 'background 0.1s ease',
+                        position: 'relative',
+                        minWidth: 0,
+                      }}
+                    >
+                      {/* Live line indicator for current minute */}
+                      {isCurrentHour && (
                         <div
                           style={{
-                            background: 'var(--blue-bg)',
-                            borderLeft: '3px solid var(--blue)',
-                            borderRadius: 'var(--r-sm)',
-                            padding: '6px 10px',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
+                            position: 'absolute',
+                            left: 0,
+                            right: 0,
+                            top: `${(currentMinute / 60) * 100}%`,
+                            height: 2,
+                            background: 'var(--red)',
+                            zIndex: 5,
                           }}
-                        >
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--blue)' }}>{m.title}</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-                              {m.startTime}{m.endTime ? ` – ${m.endTime}` : ''} {m.location ? `· ${m.location}` : ''}
-                            </div>
-                          </div>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase' }}>
-                            Meeting
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
+                        />
+                      )}
 
-                    {/* Render Custom Scheduled Blocks */}
-                    {matchedBlocks.map(block => {
-                      const style = CATEGORY_STYLES[block.category] || CATEGORY_STYLES.task;
-                      return (
-                        <div
-                          key={block.id}
-                          style={{
-                            background: style.bg,
-                            borderLeft: `3px solid ${style.border}`,
-                            borderRadius: 'var(--r-sm)',
-                            padding: '6px 10px',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            opacity: block.completed ? 0.6 : 1,
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <input
-                              type="checkbox"
-                              checked={block.completed || false}
-                              onChange={() => handleToggleBlock(block.id)}
-                              style={{ cursor: 'pointer' }}
-                            />
-                            <div>
-                              <div style={{ fontSize: 13, fontWeight: 600, textDecoration: block.completed ? 'line-through' : 'none' }}>
-                                {block.title}
+                      {/* Render Meetings from DB */}
+                      {matchedMeetings.map(m => (
+                        <Link key={`m_${m._id}`} href={`/meetings/${m._id}`} style={{ textDecoration: 'none' }}>
+                          <div
+                            style={{
+                              background: 'var(--blue-bg)',
+                              borderLeft: '3px solid var(--blue)',
+                              borderRadius: 6,
+                              padding: '6px 10px',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              gap: 6
+                            }}
+                          >
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--blue)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {m.title}
                               </div>
                               <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-                                {block.startTime} – {block.endTime} {block.notes ? `· ${block.notes}` : ''}
+                                {m.startTime}{m.endTime ? ` – ${m.endTime}` : ''} {m.location ? `· ${m.location}` : ''}
                               </div>
                             </div>
+                            <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--blue)', textTransform: 'uppercase', flexShrink: 0 }}>
+                              Meeting
+                            </span>
                           </div>
+                        </Link>
+                      ))}
 
-                          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                            <button
-                              onClick={() => openEditModal(block)}
-                              className="btn btn-ghost btn-sm"
-                              style={{ padding: '0 4px', fontSize: 11 }}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteBlock(block.id)}
-                              className="btn btn-ghost btn-sm"
-                              style={{ padding: '0 4px', fontSize: 11 }}
-                            >
-                              ✕
-                            </button>
+                      {/* Render Custom Scheduled Blocks */}
+                      {matchedBlocks.map(block => {
+                        const style = CATEGORY_STYLES[block.category] || CATEGORY_STYLES.task;
+                        return (
+                          <div
+                            key={block.id}
+                            style={{
+                              background: style.bg,
+                              borderLeft: `3px solid ${style.border}`,
+                              borderRadius: 6,
+                              padding: '6px 10px',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              gap: 6,
+                              opacity: block.completed ? 0.6 : 1,
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                              <input
+                                type="checkbox"
+                                checked={block.completed || false}
+                                onChange={() => handleToggleBlock(block.id)}
+                                style={{ cursor: 'pointer', flexShrink: 0 }}
+                              />
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, textDecoration: block.completed ? 'line-through' : 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {block.title}
+                                </div>
+                                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                                  {block.startTime} – {block.endTime} {block.notes ? `· ${block.notes}` : ''}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
+                              <button
+                                onClick={() => openEditModal(block)}
+                                className="btn btn-ghost btn-sm"
+                                style={{ padding: '0 4px', fontSize: 11 }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteBlock(block.id)}
+                                className="btn btn-ghost btn-sm"
+                                style={{ padding: '0 4px', fontSize: 11, color: 'var(--red)' }}
+                              >
+                                ✕
+                              </button>
+                            </div>
                           </div>
+                        );
+                      })}
+
+                      {/* Quick Add link when slot is empty */}
+                      {matchedMeetings.length === 0 && matchedBlocks.length === 0 && (
+                        <div
+                          onClick={() => openAddModal(hour)}
+                          style={{
+                            height: '100%',
+                            minHeight: 22,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: 'var(--text-muted)',
+                            fontSize: 11,
+                          }}
+                        >
+                          {isOver ? 'Drop to schedule' : ''}
                         </div>
-                      );
-                    })}
-
-                    {/* Quick Add link when slot is empty */}
-                    {matchedMeetings.length === 0 && matchedBlocks.length === 0 && (
-                      <div
-                        onClick={() => openAddModal(hour)}
-                        style={{
-                          height: '100%',
-                          minHeight: 24,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          color: 'var(--text-muted)',
-                          fontSize: 11,
-                        }}
-                      >
-                        {isOver ? 'Drop to schedule' : ''}
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Categorized Sidebar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div className="card" style={{ padding: 16 }}>
+        {/* ── RIGHT COLUMN: Categorized Sidebar & Tray ── */}
+        <div className={`calendar-col-tray ${mobileTab === 'tray' ? 'mobile-visible' : 'mobile-hidden'}`} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="card" style={{ padding: 14 }}>
             {/* Search & Tabs */}
-            <div style={{ marginBottom: 12 }}>
+            <div style={{ marginBottom: 10 }}>
               <input
                 type="text"
                 className="input"
-                placeholder="Search items..."
+                placeholder="🔍 Search items to schedule..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                style={{ fontSize: 13, marginBottom: 10 }}
+                style={{ fontSize: 12, marginBottom: 8 }}
               />
 
-              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 4 }}>
                 {CATEGORIES.map(cat => (
                   <button
                     key={cat.id}
                     onClick={() => setSidebarTab(cat.id)}
                     className={`btn btn-sm ${sidebarTab === cat.id ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ fontSize: 11, padding: '3px 8px' }}
+                    style={{ fontSize: 10, padding: '3px 7px', flexShrink: 0 }}
                   >
                     {cat.label}
                   </button>
@@ -630,26 +749,29 @@ export default function CalendarPage() {
             </div>
 
             {loading ? (
-              <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
+              <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
                 Loading items...
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxHeight: 'calc(100vh - 260px)', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 'min(60vh, calc(100vh - 280px))', overflowY: 'auto' }}>
                 
                 {/* Meetings */}
                 {(sidebarTab === 'all' || sidebarTab === 'meetings') && filteredMeetings.length > 0 && (
                   <div>
-                    <div className="section-label" style={{ marginBottom: 6 }}>Meetings</div>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>
+                      Meetings
+                    </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {filteredMeetings.map(m => (
                         <div
                           key={m._id}
                           draggable
                           onDragStart={e => handleDragStart(e, m, 'meeting')}
-                          className="card card-hover"
-                          style={{ padding: '8px 10px', cursor: 'grab', fontSize: 12, borderLeft: '3px solid var(--blue)' }}
+                          onClick={() => scheduleItemDirectly(m, 'meeting')}
+                          className="card"
+                          style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 12, borderLeft: '3px solid var(--blue)' }}
                         >
-                          <div style={{ fontWeight: 600 }}>{m.title}</div>
+                          <div style={{ fontWeight: 700, color: 'var(--text)' }}>{m.title}</div>
                           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
                             {m.date ? m.date.slice(0, 10) : 'No date'} {m.startTime ? `· ${m.startTime}` : ''}
                           </div>
@@ -662,19 +784,22 @@ export default function CalendarPage() {
                 {/* GATE & College Study */}
                 {(sidebarTab === 'all' || sidebarTab === 'study') && (filteredGate.length > 0 || filteredCollege.length > 0) && (
                   <div>
-                    <div className="section-label" style={{ marginBottom: 6 }}>Study & Subjects</div>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>
+                      Study & Subjects
+                    </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {filteredGate.map(g => (
                         <div
                           key={g._id}
                           draggable
                           onDragStart={e => handleDragStart(e, { title: `GATE: ${g.name}` }, 'gate')}
-                          className="card card-hover"
-                          style={{ padding: '8px 10px', cursor: 'grab', fontSize: 12, borderLeft: '3px solid var(--purple)' }}
+                          onClick={() => scheduleItemDirectly({ title: `GATE: ${g.name}` }, 'gate')}
+                          className="card"
+                          style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 12, borderLeft: '3px solid var(--purple)' }}
                         >
-                          <div style={{ fontWeight: 600 }}>{g.code ? `[${g.code}] ` : ''}{g.name}</div>
+                          <div style={{ fontWeight: 700 }}>{g.code ? `[${g.code}] ` : ''}{g.name}</div>
                           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                            GATE Subject · {g.progress || 0}% covered
+                            GATE Subject · Tap to schedule
                           </div>
                         </div>
                       ))}
@@ -684,12 +809,13 @@ export default function CalendarPage() {
                           key={c._id}
                           draggable
                           onDragStart={e => handleDragStart(e, { title: `College: ${c.name}` }, 'college')}
-                          className="card card-hover"
-                          style={{ padding: '8px 10px', cursor: 'grab', fontSize: 12, borderLeft: '3px solid var(--orange)' }}
+                          onClick={() => scheduleItemDirectly({ title: `College: ${c.name}` }, 'college')}
+                          className="card"
+                          style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 12, borderLeft: '3px solid var(--orange)' }}
                         >
-                          <div style={{ fontWeight: 600 }}>{c.name}</div>
+                          <div style={{ fontWeight: 700 }}>{c.name}</div>
                           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                            College · {c.attendance || 0}% attendance
+                            College · Tap to schedule
                           </div>
                         </div>
                       ))}
@@ -700,25 +826,28 @@ export default function CalendarPage() {
                 {/* Tasks */}
                 {(sidebarTab === 'all' || sidebarTab === 'tasks') && filteredTasks.length > 0 && (
                   <div>
-                    <div className="section-label" style={{ marginBottom: 6 }}>Tasks & Deadlines</div>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>
+                      Tasks & Deadlines
+                    </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {filteredTasks.map(t => (
                         <div
                           key={t._id}
                           draggable
                           onDragStart={e => handleDragStart(e, t, 'task')}
-                          className="card card-hover"
-                          style={{ padding: '8px 10px', cursor: 'grab', fontSize: 12 }}
+                          onClick={() => scheduleItemDirectly(t, 'task')}
+                          className="card"
+                          style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 12 }}
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontWeight: 600 }}>{t.name}</span>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: t.priority === 'P0' ? 'var(--red)' : 'var(--orange)' }}>
+                            <span style={{ fontWeight: 700 }}>{t.name}</span>
+                            <span style={{ fontSize: 10, fontWeight: 800, color: t.priority === 'P0' ? 'var(--red)' : 'var(--orange)' }}>
                               {t.priority}
                             </span>
                           </div>
                           {t.deadline && (
                             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                              Due: {t.deadline.slice(0, 10)} {t.estimatedDuration ? `· ${t.estimatedDuration}m` : ''}
+                              Due: {t.deadline.slice(0, 10)} · Tap to schedule
                             </div>
                           )}
                         </div>
@@ -730,17 +859,20 @@ export default function CalendarPage() {
                 {/* Projects */}
                 {(sidebarTab === 'all' || sidebarTab === 'projects') && filteredProjects.length > 0 && (
                   <div>
-                    <div className="section-label" style={{ marginBottom: 6 }}>Projects</div>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>
+                      Projects
+                    </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {filteredProjects.map(p => (
                         <div
                           key={p._id}
                           draggable
                           onDragStart={e => handleDragStart(e, { title: `Project: ${p.title}` }, 'project')}
-                          className="card card-hover"
-                          style={{ padding: '8px 10px', cursor: 'grab', fontSize: 12, borderLeft: '3px solid var(--green)' }}
+                          onClick={() => scheduleItemDirectly({ title: `Project: ${p.title}` }, 'project')}
+                          className="card"
+                          style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 12, borderLeft: '3px solid var(--green)' }}
                         >
-                          <div style={{ fontWeight: 600 }}>{p.title}</div>
+                          <div style={{ fontWeight: 700 }}>{p.title}</div>
                           {p.area && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{p.area}</div>}
                         </div>
                       ))}
@@ -753,16 +885,50 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Standard Modal for Adding/Editing Events */}
+      {/* ── CSS for calendar responsive grid ── */}
+      <style jsx global>{`
+        .calendar-responsive-grid {
+          display: grid;
+          grid-template-columns: 280px 1fr 280px;
+          gap: 20px;
+          align-items: start;
+        }
+
+        .calendar-col-month,
+        .calendar-col-timeline,
+        .calendar-col-tray {
+          min-width: 0;
+        }
+
+        @media (max-width: 900px) {
+          .calendar-mobile-tabs {
+            display: flex !important;
+          }
+          .calendar-responsive-grid {
+            display: block !important;
+          }
+          .mobile-hidden {
+            display: none !important;
+          }
+          .calendar-col-month.mobile-visible,
+          .calendar-col-timeline.mobile-visible,
+          .calendar-col-tray.mobile-visible {
+            display: flex !important;
+            flex-direction: column;
+          }
+        }
+      `}</style>
+
+      {/* ── Modal for Adding/Editing Events ── */}
       {showModal && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
-          <div className="modal">
-            <div className="modal-header">
-              <h2 className="modal-title">{editingBlock ? 'Edit Event' : 'Schedule Event'}</h2>
-              <button className="btn modal-close" onClick={() => setShowModal(false)}>✕</button>
+        <div className="modal-backdrop" onClick={() => setShowModal(false)}>
+          <div className="modal-card" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 800 }}>{editingBlock ? 'Edit Event' : 'Schedule Event'}</h2>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowModal(false)}>✕</button>
             </div>
-            <form onSubmit={handleSaveModal}>
-              <div className="form-group">
+            <form onSubmit={handleSaveModal} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
                 <label className="label">Title *</label>
                 <input
                   className="input"
@@ -774,8 +940,8 @@ export default function CalendarPage() {
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
                   <label className="label">Date</label>
                   <input
                     type="date"
@@ -785,7 +951,7 @@ export default function CalendarPage() {
                     required
                   />
                 </div>
-                <div className="form-group">
+                <div>
                   <label className="label">Category</label>
                   <select
                     className="input select"
@@ -802,8 +968,8 @@ export default function CalendarPage() {
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
                   <label className="label">Start Time</label>
                   <input
                     type="time"
@@ -813,7 +979,7 @@ export default function CalendarPage() {
                     required
                   />
                 </div>
-                <div className="form-group">
+                <div>
                   <label className="label">End Time</label>
                   <input
                     type="time"
@@ -825,7 +991,7 @@ export default function CalendarPage() {
                 </div>
               </div>
 
-              <div className="form-group">
+              <div>
                 <label className="label">Notes</label>
                 <input
                   className="input"
@@ -835,18 +1001,27 @@ export default function CalendarPage() {
                 />
               </div>
 
-              <div className="modal-footer">
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Save
+                  Save Event
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* ── Reminder Center Modal ── */}
+      <ReminderCenter
+        isOpen={showReminderCenter}
+        onClose={() => setShowReminderCenter(false)}
+        schedule={dayBlocks}
+        tasks={dayTasks}
+        meetings={dayMeetings}
+      />
     </AppShell>
   );
 }

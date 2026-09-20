@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import AppShell from '@/components/AppShell';
 import Link from 'next/link';
+import ReminderCenter from '@/components/ReminderCenter';
+import { checkNotificationPermission, syncAllTodayReminders } from '@/lib/notifications';
 
 const DEFAULT_SCHEDULE = [
   { id: 'sb_1', time: '06:00', label: 'Wake up / Morning', type: 'habit', color: '#8b5cf6' },
@@ -57,6 +59,7 @@ export default function TodayPage() {
 
   // Edit / Add block modal
   const [showBlockModal, setShowBlockModal] = useState(false);
+  const [showReminderCenter, setShowReminderCenter] = useState(false);
   const [editingBlock, setEditingBlock] = useState(null);
   const [blockForm, setBlockForm] = useState({
     time: '15:00',
@@ -310,6 +313,14 @@ export default function TodayPage() {
               Tasks Pool
             </button>
           </div>
+
+          <button
+            className="btn btn-secondary btn-sm"
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={() => setShowReminderCenter(true)}
+          >
+            <span>🔔</span> Reminders
+          </button>
 
           <button
             className="btn btn-secondary btn-sm"
@@ -757,6 +768,16 @@ export default function TodayPage() {
           </div>
         </div>
       )}
+
+      {/* Reminder Center Modal */}
+      <ReminderCenter
+        isOpen={showReminderCenter}
+        onClose={() => setShowReminderCenter(false)}
+        schedule={schedule}
+        tasks={tasks}
+        blockAssignments={blockAssignments}
+        meetings={meetings}
+      />
     </AppShell>
   );
 }

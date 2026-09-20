@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>OPS - Personal OS</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      text-align: center;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 28px 24px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+    }
+    .spinner {
+      width: 38px;
+      height: 38px;
+      border: 3.5px solid rgba(255,255,255,0.15);
+      border-top-color: #8b5cf6;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div style="display:flex; justify-content:center; margin-bottom:12px;">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <rect x="2" y="2" width="44" height="44" rx="12" fill="#6d28d9" />
+        <rect x="3.5" y="3.5" width="41" height="41" rx="10.5" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1.5" />
+        <path d="M13 18C13 15.2 15.2 13 18 13C20.8 13 23 15.2 23 18V30C23 32.8 20.8 35 18 35C15.2 35 13 32.8 13 30V18Z" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>
+        <circle cx="18" cy="24" r="2" fill="#38bdf8" />
+        <path d="M27 34V14H33C35.2 14 37 15.8 37 18C37 20.2 35.2 22 33 22H27" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>
+        <path d="M36 26C36 26 34.5 25 32 25C29.5 25 28 26.5 28 28.5C28 31 31 31.5 33 32C35 32.5 36 33.5 36 35C36 37 34 38 31.5 38C29 38 27.5 37 27.5 37" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="spinner"></div>
+    <h2 style="font-size: 18px; font-weight: 800;">OPS Operating System</h2>
+    <p style="color: #94a3b8; font-size: 13px; margin-top: 6px;">Opening ops.mohitrajsinh.me...</p>
+  </div>
+
+  <script>
+    window.location.replace('https://ops.mohitrajsinh.me');
+  </script>
+</body>
+</html>

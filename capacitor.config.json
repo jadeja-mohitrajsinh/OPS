@@ -1,0 +1,18 @@
+{
+  "appId": "com.mohit.ops",
+  "appName": "OPS",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://ops.mohitrajsinh.me",
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_ops",
+      "iconColor": "#6d28d9",
+      "sound": "beep.wav"
+    }
+  }
+}
