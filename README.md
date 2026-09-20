@@ -25,9 +25,10 @@ A high-performance, mobile-first personal operating system and management dashbo
 - Direct links to subjects, syllabus coverage, and submission deadlines.
 
 ### 5. ⚡ Forge Startup Hub (`/forge`)
-- Startup hypothesis, deep research, user discovery, and competitor breakdowns.
-- Stage-based progression: `RESEARCH` ➔ `INSIGHT` ➔ `DECISION` ➔ `ACTION` ➔ `DONE`.
-- Areas: Product, AI/ML, Engineering, Users, Competitors, Experiments, Business, and UX.
+- **Research & Discovery**: Startup hypotheses, discovery notes, stage pipeline (`RESEARCH` ➔ `INSIGHT` ➔ `DECISION` ➔ `ACTION` ➔ `DONE`), and multi-area filtering.
+- **Competitor Intelligence**: Dedicated competitor profiles, threat scoring (`CRITICAL` to `WATCHING`), direct/indirect categorizations, strengths, vulnerabilities, and pricing teardowns.
+- **Unfair Advantage & Moat Mapping**: Clear definition of why our solution wins over each rival, with 1-click conversion of rival weaknesses into exploitable Forge hypotheses.
+- **Feature Battle Matrix & Positioning**: Side-by-side capability scoring (`⭐ Superior`, `✅ Supported`, `⚠️ Partial`, `❌ Missing`) and 2x2 strategic quadrant mapping.
 
 ### 6. 🚀 Projects & Milestone Engine (`/projects`, `/projects/[id]`)
 - Multi-area initiative tracking with milestone progress bars, blocker/risk logs, key architecture decisions, and notes.

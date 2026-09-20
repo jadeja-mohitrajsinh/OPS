@@ -10,6 +10,7 @@ import GateSubject from '@/models/GateSubject';
 import CollegeSubject from '@/models/CollegeSubject';
 import ForgeResearch from '@/models/ForgeResearch';
 import Book from '@/models/Book';
+import Competitor from '@/models/Competitor';
 
 export async function GET(request) {
   try {
@@ -22,7 +23,7 @@ export async function GET(request) {
 
     const regex = new RegExp(q, 'i');
 
-    const [tasks, meetings, people, projects, notes, decisions, gate, college, forge, books] = await Promise.all([
+    const [tasks, meetings, people, projects, notes, decisions, gate, college, forge, books, competitors] = await Promise.all([
       Task.find({ $or: [{ name: regex }, { notes: regex }, { tags: regex }] }).limit(5).lean(),
       Meeting.find({ $or: [{ title: regex }, { notes: regex }, { purpose: regex }] }).limit(5).lean(),
       Person.find({ $or: [{ name: regex }, { notes: regex }, { organization: regex }] }).limit(5).lean(),
@@ -33,6 +34,7 @@ export async function GET(request) {
       CollegeSubject.find({ name: regex }).limit(3).lean(),
       ForgeResearch.find({ $or: [{ problem: regex }, { finding: regex }, { insight: regex }] }).limit(5).lean(),
       Book.find({ $or: [{ title: regex }, { author: regex }] }).limit(3).lean(),
+      Competitor.find({ $or: [{ name: regex }, { tagline: regex }, { ourDifferentiator: regex }] }).limit(5).lean(),
     ]);
 
     const results = [
@@ -46,6 +48,7 @@ export async function GET(request) {
       ...college.map(c => ({ ...c, _type: 'college' })),
       ...forge.map(f => ({ ...f, _type: 'forge' })),
       ...books.map(b => ({ ...b, _type: 'book' })),
+      ...competitors.map(c => ({ ...c, _type: 'competitor' })),
     ];
 
     return NextResponse.json({ success: true, data: results });
