@@ -1,0 +1,21 @@
+{
+  "name": "ops",
+  "version": "1.0.0",
+  "description": "Personal OS - Entrepreneur & Student Operating System",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "lucide-react": "^1.47.0",
+    "mongoose": "^9.10.1",
+    "next": "^14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "keywords": [],
+  "author": "Mohit",
+  "license": "ISC"
+}
