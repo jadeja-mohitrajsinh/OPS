@@ -16,7 +16,7 @@ const MeetingSchema = new mongoose.Schema({
   location: { type: String, default: '' },
   isOnline: { type: Boolean, default: false },
   meetingLink: { type: String, default: '' },
-  people: [{ type: String }],
+  people: [{ type: mongoose.Schema.Types.Mixed }],
   organization: { type: String, default: '' },
   project: { type: String, default: '' },
   purpose: { type: String, default: '' },
@@ -25,6 +25,7 @@ const MeetingSchema = new mongoose.Schema({
   decisions: [{ type: String }],
   actionItems: [ActionItemSchema],
   followUpDate: { type: Date },
+  followUpPerson: { type: mongoose.Schema.Types.ObjectId, ref: 'Person' },
   attachments: [{ type: String }],
   status: { type: String, enum: ['SCHEDULED', 'COMPLETED', 'CANCELLED', 'RESCHEDULED'], default: 'SCHEDULED' },
   preparationChecklist: [{

@@ -15,7 +15,7 @@ export async function GET(request) {
       query.date = { $gte: new Date() };
     }
 
-    const meetings = await Meeting.find(query).sort({ date: upcoming === 'true' ? 1 : -1 });
+    const meetings = await Meeting.find(query).populate('people').populate('followUpPerson').sort({ date: upcoming === 'true' ? 1 : -1 });
     return NextResponse.json({ success: true, data: meetings });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

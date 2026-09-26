@@ -56,7 +56,7 @@ export default function LearningPage() {
     try {
       const payload = {
         ...form,
-        tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        tags: Array.isArray(form.tags) ? form.tags : (form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
       };
 
       if (editingNote) {

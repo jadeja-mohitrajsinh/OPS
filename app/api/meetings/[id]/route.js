@@ -5,7 +5,7 @@ import Meeting from '@/models/Meeting';
 export async function GET(request, { params }) {
   try {
     await dbConnect();
-    const meeting = await Meeting.findById(params.id);
+    const meeting = await Meeting.findById(params.id).populate('people').populate('followUpPerson');
     if (!meeting) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: meeting });
   } catch (error) {
@@ -17,7 +17,7 @@ export async function PUT(request, { params }) {
   try {
     await dbConnect();
     const body = await request.json();
-    const meeting = await Meeting.findByIdAndUpdate(params.id, body, { new: true, runValidators: true });
+    const meeting = await Meeting.findByIdAndUpdate(params.id, body, { new: true, runValidators: true }).populate('people').populate('followUpPerson');
     if (!meeting) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: meeting });
   } catch (error) {

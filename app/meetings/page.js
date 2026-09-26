@@ -1,30 +1,75 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import Link from 'next/link';
 
 const STATUS_COLORS = { SCHEDULED: 'var(--blue)', COMPLETED: 'var(--green)', CANCELLED: 'var(--red)', RESCHEDULED: 'var(--orange)' };
 const STATUS_BG = { SCHEDULED: 'var(--blue-bg)', COMPLETED: 'var(--green-bg)', CANCELLED: 'var(--red-bg)', RESCHEDULED: 'var(--orange-bg)' };
 
-function MeetingForm({ onSave, onClose, initial = {} }) {
-  const [form, setForm] = useState({
-    title: '', date: '', startTime: '', endTime: '', location: '', isOnline: false,
-    meetingLink: '', people: '', organization: '', project: '', purpose: '', agenda: '',
-    status: 'SCHEDULED', ...initial,
-    people: Array.isArray(initial.people) ? initial.people.join(', ') : (initial.people || ''),
+function MeetingForm({ onSave, onClose, initial = {}, availablePeople = [] }) {
+  const [form, setForm] = useState(() => {
+    const baseForm = {
+      title: '', date: '', startTime: '', endTime: '', location: '', isOnline: false,
+      meetingLink: '', organization: '', project: '', purpose: '', agenda: '',
+      status: 'SCHEDULED', followUpDate: '', followUpPerson: '',
+      ...initial,
+    };
+    // Convert people to array if it's a string or single ObjectId
+    baseForm.people = Array.isArray(baseForm.people) ? baseForm.people : (baseForm.people ? [baseForm.people] : []);
+    return baseForm;
   });
+  const [showPeopleDropdown, setShowPeopleDropdown] = useState(false);
+  const [peopleSearch, setPeopleSearch] = useState('');
+  const [showFollowUpDropdown, setShowFollowUpDropdown] = useState(false);
+  const [followUpSearch, setFollowUpSearch] = useState('');
+  const dropdownRef = React.useRef(null);
+  const followUpDropdownRef = React.useRef(null);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowPeopleDropdown(false);
+      }
+      if (followUpDropdownRef.current && !followUpDropdownRef.current.contains(event.target)) {
+        setShowFollowUpDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.title.trim() || !form.date || !form.startTime) return;
     const payload = {
       ...form,
-      people: form.people ? form.people.split(',').map(p => p.trim()).filter(Boolean) : [],
+      people: form.people || [],
     };
     await onSave(payload);
     onClose();
   }
+
+  const handleAddPerson = (person) => {
+    if (!person) return;
+    const personId = typeof person === 'object' ? person._id : person;
+    if (personId && !form.people.includes(personId)) {
+      setForm(f => ({ ...f, people: [...f.people, personId] }));
+    }
+    setPeopleSearch('');
+    setShowPeopleDropdown(false);
+  };
+
+  const handleRemovePerson = (personId) => {
+    setForm(f => ({ ...f, people: f.people.filter(p => p !== personId) }));
+  };
+
+  const filteredPeople = availablePeople.filter(p => 
+    p.name.toLowerCase().includes(peopleSearch.toLowerCase()) ||
+    (p.role && p.role.toLowerCase().includes(peopleSearch.toLowerCase())) ||
+    (p.organization && p.organization.toLowerCase().includes(peopleSearch.toLowerCase()))
+  );
 
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -59,8 +104,139 @@ function MeetingForm({ onSave, onClose, initial = {} }) {
             </div>
           </div>
           <div className="form-group">
-            <label className="label">People (comma separated)</label>
-            <input className="input" value={form.people} onChange={e => set('people', e.target.value)} placeholder="John, Sarah, Team..." />
+            <label className="label">People</label>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Search and select from your contacts</div>
+            <div style={{ position: 'relative' }}>
+              {/* Selected People Tags */}
+              <div style={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                gap: 6, 
+                marginBottom: 8,
+                minHeight: form.people.length > 0 ? 'auto' : 0 
+              }}>
+                {form.people.map((personId, idx) => {
+                  const person = availablePeople.find(p => p._id === personId);
+                  const displayName = person ? person.name : personId;
+                  if (!displayName) return null;
+                  return (
+                    <div key={idx} style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      background: 'var(--surface-2)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 6,
+                      padding: '4px 8px',
+                      fontSize: 12,
+                      fontWeight: 500,
+                    }}>
+                      <span>{displayName}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePerson(personId)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-muted)',
+                          cursor: 'pointer',
+                          fontSize: 14,
+                          padding: 0,
+                          lineHeight: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* People Search Input */}
+              <div style={{ position: 'relative' }} ref={dropdownRef}>
+                <input
+                  className="input"
+                  type="text"
+                  placeholder="Add people..."
+                  value={peopleSearch}
+                  onChange={e => {
+                    setPeopleSearch(e.target.value);
+                    setShowPeopleDropdown(true);
+                  }}
+                  onFocus={() => setShowPeopleDropdown(true)}
+                  style={{ width: '100%' }}
+                />
+                
+                {/* People Dropdown */}
+                {showPeopleDropdown && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 8,
+                    marginTop: 4,
+                    maxHeight: 200,
+                    overflowY: 'auto',
+                    zIndex: 100,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  }}>
+                    {filteredPeople.length > 0 ? (
+                      filteredPeople.map(person => (
+                        <div
+                          key={person._id}
+                          onClick={() => handleAddPerson(person._id)}
+                          style={{
+                            padding: '8px 12px',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid var(--border)',
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <div style={{ fontSize: 13, fontWeight: 600 }}>{person.name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                            {person.role && <span>{person.role}</span>}
+                            {person.organization && person.role && <span> · </span>}
+                            {person.organization && <span>{person.organization}</span>}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: '12px', fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
+                        {peopleSearch ? (
+                          <div>
+                            <div>No matching people found</div>
+                            <button
+                              type="button"
+                              onClick={() => handleAddPerson(peopleSearch)}
+                              style={{
+                                marginTop: 8,
+                                background: 'var(--accent)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: 4,
+                                padding: '4px 12px',
+                                fontSize: 11,
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                              }}
+                            >
+                              Add "{peopleSearch}" as custom
+                            </button>
+                          </div>
+                        ) : 'Type to search people'}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           <div className="form-row">
             <div className="form-group">
@@ -81,9 +257,115 @@ function MeetingForm({ onSave, onClose, initial = {} }) {
             <label className="label">Purpose</label>
             <input className="input" value={form.purpose} onChange={e => set('purpose', e.target.value)} placeholder="Why this meeting?" />
           </div>
-          <div className="form-group" style={{ marginBottom: 0 }}>
+          <div className="form-group">
             <label className="label">Agenda</label>
             <textarea className="input textarea" value={form.agenda} onChange={e => set('agenda', e.target.value)} placeholder="Topics to cover..." rows={3} />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="label">Follow-up Date</label>
+              <input className="input" type="date" value={form.followUpDate ? form.followUpDate.slice(0,10) : ''} onChange={e => set('followUpDate', e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="label">Follow-up With</label>
+              <div style={{ position: 'relative' }} ref={followUpDropdownRef}>
+                <input
+                  className="input"
+                  type="text"
+                  placeholder="Select person..."
+                  value={form.followUpPerson ? (availablePeople.find(p => p._id === form.followUpPerson)?.name || form.followUpPerson) : followUpSearch}
+                  onChange={e => {
+                    setFollowUpSearch(e.target.value);
+                    setShowFollowUpDropdown(true);
+                  }}
+                  onFocus={() => setShowFollowUpDropdown(true)}
+                  style={{ width: '100%' }}
+                />
+                
+                {/* Follow-up Person Dropdown */}
+                {showFollowUpDropdown && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 8,
+                    marginTop: 4,
+                    maxHeight: 200,
+                    overflowY: 'auto',
+                    zIndex: 100,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  }}>
+                    {availablePeople.filter(p => 
+                      p.name.toLowerCase().includes(followUpSearch.toLowerCase()) ||
+                      (p.role && p.role.toLowerCase().includes(followUpSearch.toLowerCase())) ||
+                      (p.organization && p.organization.toLowerCase().includes(followUpSearch.toLowerCase()))
+                    ).length > 0 ? (
+                      availablePeople.filter(p => 
+                        p.name.toLowerCase().includes(followUpSearch.toLowerCase()) ||
+                        (p.role && p.role.toLowerCase().includes(followUpSearch.toLowerCase())) ||
+                        (p.organization && p.organization.toLowerCase().includes(followUpSearch.toLowerCase()))
+                      ).map(person => (
+                        <div
+                          key={person._id}
+                          onClick={() => {
+                            set('followUpPerson', person._id);
+                            setFollowUpSearch('');
+                            setShowFollowUpDropdown(false);
+                          }}
+                          style={{
+                            padding: '8px 12px',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid var(--border)',
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <div style={{ fontSize: 13, fontWeight: 600 }}>{person.name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                            {person.role && <span>{person.role}</span>}
+                            {person.organization && person.role && <span> · </span>}
+                            {person.organization && <span>{person.organization}</span>}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: '12px', fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
+                        {followUpSearch ? (
+                          <div>
+                            <div>No matching people found</div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                set('followUpPerson', followUpSearch);
+                                setFollowUpSearch('');
+                                setShowFollowUpDropdown(false);
+                              }}
+                              style={{
+                                marginTop: 8,
+                                background: 'var(--accent)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: 4,
+                                padding: '4px 12px',
+                                fontSize: 11,
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                              }}
+                            >
+                              Add "{followUpSearch}" as custom
+                            </button>
+                          </div>
+                        ) : 'Type to search people'}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
@@ -95,7 +377,7 @@ function MeetingForm({ onSave, onClose, initial = {} }) {
   );
 }
 
-function MeetingCard({ meeting, onEdit }) {
+function MeetingCard({ meeting, onEdit, people }) {
   const date = new Date(meeting.date);
   const isPast = date < new Date();
   const isToday = date.toDateString() === new Date().toDateString();
@@ -117,7 +399,16 @@ function MeetingCard({ meeting, onEdit }) {
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                 {meeting.startTime}{meeting.endTime ? ` – ${meeting.endTime}` : ''}
-                {meeting.people?.length > 0 && ` · ${meeting.people.slice(0,3).join(', ')}`}
+                {Array.isArray(meeting.people) && meeting.people.length > 0 && (
+                  <>
+                    {' · '}
+                    {meeting.people.slice(0, 3).map(pId => {
+                      const person = people.find(p => p._id === pId);
+                      return person ? person.name : pId;
+                    }).join(', ')}
+                    {meeting.people.length > 3 && ` +${meeting.people.length - 3}`}
+                  </>
+                )}
                 {meeting.location && ` · ${meeting.location}`}
               </div>
               {meeting.purpose && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meeting.purpose}</div>}
@@ -131,6 +422,7 @@ function MeetingCard({ meeting, onEdit }) {
 
 export default function MeetingsPage() {
   const [meetings, setMeetings] = useState([]);
+  const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -138,9 +430,12 @@ export default function MeetingsPage() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch('/api/meetings');
-    const data = await res.json();
-    setMeetings(data.success ? data.data : []);
+    const [mRes, pRes] = await Promise.all([
+      fetch('/api/meetings').then(r => r.json()).catch(() => ({ success: false, data: [] })),
+      fetch('/api/people').then(r => r.json()).catch(() => ({ success: false, data: [] })),
+    ]);
+    setMeetings(mRes.success ? mRes.data : []);
+    setPeople(pRes.success ? pRes.data : []);
     setLoading(false);
   }
 
@@ -194,12 +489,17 @@ export default function MeetingsPage() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {sorted.map(m => <MeetingCard key={m._id} meeting={m} onEdit={() => { setEditing(m); setShowForm(true); }} />)}
+          {sorted.map(m => <MeetingCard key={m._id} meeting={m} onEdit={() => { setEditing(m); setShowForm(true); }} people={people} />)}
         </div>
       )}
 
       {(showForm || editing) && (
-        <MeetingForm initial={editing || {}} onSave={handleSave} onClose={() => { setShowForm(false); setEditing(null); }} />
+        <MeetingForm 
+          initial={editing || {}} 
+          availablePeople={people}
+          onSave={handleSave} 
+          onClose={() => { setShowForm(false); setEditing(null); }} 
+        />
       )}
     </AppShell>
   );

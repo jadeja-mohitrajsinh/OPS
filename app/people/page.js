@@ -136,6 +136,9 @@ export default function PeoplePage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [view, setView] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterRelationship, setFilterRelationship] = useState('all');
+  const [sortBy, setSortBy] = useState('name');
 
   async function load() {
     setLoading(true);
@@ -162,7 +165,43 @@ export default function PeoplePage() {
     'waiting': people.filter(p => (p.commitments || []).some(c => c.type === 'THEY_OWE' && c.status === 'OPEN')),
     'owe': people.filter(p => (p.commitments || []).some(c => c.type === 'I_OWE' && c.status === 'OPEN')),
   };
-  const filtered = views[view] || people;
+
+  // Apply search and filters
+  let filtered = views[view] || people;
+  
+  // Search filter
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase();
+    filtered = filtered.filter(p => 
+      p.name?.toLowerCase().includes(query) ||
+      p.role?.toLowerCase().includes(query) ||
+      p.organization?.toLowerCase().includes(query) ||
+      p.currentProject?.toLowerCase().includes(query) ||
+      p.importantContext?.toLowerCase().includes(query) ||
+      p.notes?.toLowerCase().includes(query)
+    );
+  }
+
+  // Relationship filter
+  if (filterRelationship !== 'all') {
+    filtered = filtered.filter(p => p.relationship === filterRelationship);
+  }
+
+  // Sorting
+  filtered = [...filtered].sort((a, b) => {
+    switch (sortBy) {
+      case 'name':
+        return a.name?.localeCompare(b.name) || 0;
+      case 'lastInteraction':
+        return new Date(b.lastInteraction || 0) - new Date(a.lastInteraction || 0);
+      case 'nextInteraction':
+        return new Date(a.nextInteraction || '9999-12-31') - new Date(b.nextInteraction || '9999-12-31');
+      case 'relationship':
+        return a.relationship?.localeCompare(b.relationship) || 0;
+      default:
+        return 0;
+    }
+  });
 
   const contactCount = views['contact'].length;
   const waitingCount = views['waiting'].length;
@@ -184,6 +223,62 @@ export default function PeoplePage() {
         </button>
         <button className={`tab-btn ${view === 'waiting' ? 'active' : ''}`} onClick={() => setView('waiting')}>Waiting</button>
         <button className={`tab-btn ${view === 'owe' ? 'active' : ''}`} onClick={() => setView('owe')}>I Owe</button>
+      </div>
+
+      {/* Search and Filter Bar */}
+      <div style={{ 
+        display: 'flex', 
+        gap: 12, 
+        marginBottom: 20, 
+        flexWrap: 'wrap',
+        alignItems: 'center' 
+      }}>
+        {/* Search Input */}
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <input
+            className="input"
+            type="text"
+            placeholder="Search people..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{ width: '100%' }}
+          />
+        </div>
+
+        {/* Relationship Filter Dropdown */}
+        <div style={{ minWidth: 150 }}>
+          <select
+            className="input select"
+            value={filterRelationship}
+            onChange={e => setFilterRelationship(e.target.value)}
+            style={{ width: '100%' }}
+          >
+            <option value="all">All Relationships</option>
+            {RELATIONSHIPS.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Sort Dropdown */}
+        <div style={{ minWidth: 150 }}>
+          <select
+            className="input select"
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+            style={{ width: '100%' }}
+          >
+            <option value="name">Sort by Name</option>
+            <option value="lastInteraction">Sort by Last Contact</option>
+            <option value="nextInteraction">Sort by Follow-up</option>
+            <option value="relationship">Sort by Relationship</option>
+          </select>
+        </div>
+
+        {/* Results Count */}
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 'auto' }}>
+          {filtered.length} of {people.length} people
+        </div>
       </div>
 
       {loading ? (

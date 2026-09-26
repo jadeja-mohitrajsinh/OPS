@@ -32,7 +32,10 @@ function TaskForm({ onSave, onClose, initial = {} }) {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.name.trim()) return;
-    const payload = { ...form, tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [] };
+    const payload = { 
+      ...form, 
+      tags: Array.isArray(form.tags) ? form.tags : (form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [])
+    };
     if (!payload.deadline) delete payload.deadline;
     await onSave(payload);
     onClose();
