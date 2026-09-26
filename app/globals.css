@@ -169,7 +169,6 @@ img { max-width: 100%; display: block; }
     padding: var(--space-6) var(--space-8);
     padding-bottom: var(--space-6);
     max-width: 900px;
-    margin: 0 auto;
   }
 }
 
@@ -697,7 +696,7 @@ img { max-width: 100%; display: block; }
 .fab:active { transform: scale(0.95); }
 
 @media (min-width: 768px) {
-  .fab { bottom: 24px; }
+  .fab { display: none; }
 }
 
 /* ─── Quick Actions Menu ─────────────────────────────────────────── */
@@ -717,7 +716,16 @@ img { max-width: 100%; display: block; }
   animation: slideUp 0.15s ease;
   min-width: 180px;
 }
-@media (min-width: 768px) { .quick-menu { bottom: 96px; } }
+@media (min-width: 768px) {
+  .quick-menu {
+    bottom: 24px;
+    left: 260px;
+    right: auto;
+  }
+  .desktop-add-section {
+    display: block !important;
+  }
+}
 
 .quick-menu-item {
   display: flex;
@@ -1056,6 +1064,123 @@ img { max-width: 100%; display: block; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ─── Schedule Drawer (Today Page) ───────────────────────────────── */
+.today-desktop-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.today-main-content {
+  width: 100%;
+}
+
+.schedule-fab {
+  display: flex;
+}
+
+.schedule-drawer-overlay-mobile {
+  display: flex;
+}
+
+.schedule-drawer-content-mobile {
+  display: flex;
+}
+
+.schedule-sidebar-desktop {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .schedule-fab {
+    display: none !important;
+  }
+
+  .schedule-drawer-overlay-mobile {
+    display: none !important;
+  }
+
+  .schedule-drawer-content-mobile {
+    display: none !important;
+  }
+
+  .today-desktop-wrapper {
+    padding: 24px;
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .schedule-sidebar-desktop {
+    position: fixed;
+    right: 24px;
+    top: 24px;
+    bottom: 24px;
+    width: 300px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    z-index: 40;
+  }
+
+  .today-main-content {
+    max-width: 640px;
+    flex: 1;
+  }
+
+  @media (max-width: 1200px) {
+    .today-desktop-wrapper {
+      padding: 20px;
+      gap: 20px;
+    }
+    .schedule-sidebar-desktop {
+      width: 280px;
+      right: 20px;
+      top: 20px;
+      bottom: 20px;
+      padding: 14px;
+    }
+    .today-main-content {
+      max-width: 580px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .today-desktop-wrapper {
+      padding: 16px;
+
+    }
+    .schedule-sidebar-desktop {
+      width: 260px;
+      right: 16px;
+      top: 16px;
+      bottom: 16px;
+      padding: 12px;
+    }
+    .today-main-content {
+      max-width: 520px;
+    }
+  }
+}
+
+/* Mobile-specific today page adjustments */
+@media (max-width: 767px) {
+  .today-desktop-wrapper {
+    padding: 12px;
+  }
+
+  .today-main-content {
+    padding: 0 4px;
+  }
+
+  .timeline-container {
+    border-radius: 12px;
+  }
+}
 
 /* ─── Transition Defaults ────────────────────────────────────────── */
 * { transition-property: none; }

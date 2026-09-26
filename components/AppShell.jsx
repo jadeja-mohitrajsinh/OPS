@@ -22,6 +22,7 @@ function Icon({ name, size = 20 }) {
     books: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>,
     life: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>,
     reviews: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>,
+    gsoc: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>,
     plus: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
     search: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
     x: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
@@ -51,6 +52,12 @@ const NAV_SECTIONS = [
       { href: '/meetings', label: 'Meetings', icon: 'meetings' },
       { href: '/people', label: 'People', icon: 'people' },
       { href: '/projects', label: 'Projects', icon: 'projects' },
+    ]
+  },
+  {
+    label: 'GSoC 2027',
+    items: [
+      { href: '/gsoc', label: 'GSoC Tracker', icon: 'gsoc' },
     ]
   },
   {
@@ -130,6 +137,12 @@ function GlobalSearch() {
     learning_note: '/learning',
     habit: '/life',
     weekly_review: '/reviews',
+    gsoc_skill: '/gsoc/skills',
+    gsoc_project: '/gsoc/projects',
+    gsoc_organization: '/gsoc/organizations',
+    gsoc_contribution: '/gsoc/contributions',
+    gsoc_experiment: '/gsoc/experiments',
+    gsoc_proposal: '/gsoc/proposals',
   };
 
   return (
@@ -241,6 +254,12 @@ export default function AppShell({ children, overdueBadge = 0 }) {
     document.documentElement.setAttribute('data-theme', saved);
   }, []);
 
+  // Sync theme on every route change to prevent theme loss during navigation
+  useEffect(() => {
+    const saved = localStorage.getItem('ops_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+  }, [pathname]);
+
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
@@ -255,6 +274,7 @@ export default function AppShell({ children, overdueBadge = 0 }) {
     { href: '/calendar', label: 'Calendar', icon: 'calendar', emoji: '📅' },
     { href: '/meetings', label: 'Meetings', icon: 'meetings', emoji: '👥' },
     { href: '/people', label: 'People', icon: 'people', emoji: '👤' },
+    { href: '/gsoc', label: 'GSoC Tracker', icon: 'gsoc', emoji: '🎯' },
     { href: '/forge', label: 'Forge', icon: 'forge', emoji: '⚡' },
     { href: '/gate', label: 'GATE 2027', icon: 'gate', emoji: '🎓' },
     { href: '/college', label: 'College', icon: 'college', emoji: '🏫' },
@@ -315,6 +335,34 @@ export default function AppShell({ children, overdueBadge = 0 }) {
               ))}
             </div>
           ))}
+        </div>
+
+        {/* Desktop Add Button */}
+        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
+          <button
+            onClick={() => setMenuOpen(o => !o)}
+            style={{
+              width: '100%',
+              background: 'var(--purple)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 10,
+              padding: '12px',
+              fontSize: 14,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <Icon name="plus" size={18} />
+            Quick Add
+          </button>
         </div>
         <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', fontSize: 11, color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <button
