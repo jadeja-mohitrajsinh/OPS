@@ -265,12 +265,12 @@ export default function HomePage() {
             <div className="section-label">Quick Access</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
               {[
-                { href: '/gate', label: 'GATE 2027', sub: `${gateDays}d left`, bg: '#f5f3ff', color: '#6d28d9' },
-                { href: '/college', label: 'College', sub: 'Mid 2 upcoming', bg: '#eff6ff', color: '#1a5fbe' },
-                { href: '/forge', label: 'Forge', sub: 'Startup OS', bg: '#fff7ed', color: '#e8660a' },
-                { href: '/meetings', label: 'Meetings', sub: `${upcomingMeetings.length} upcoming`, bg: '#f0fdf4', color: '#1a7a3e' },
-                { href: '/people', label: 'People', sub: 'CRM', bg: '#fefce8', color: '#c9920a' },
-                { href: '/reviews', label: 'Review', sub: 'Weekly CEO', bg: '#fef2f2', color: '#d93025' },
+                { href: '/gate', label: 'GATE 2027', sub: `${gateDays}d left`, bg: 'var(--purple-bg)', color: 'var(--purple)' },
+                { href: '/college', label: 'College', sub: 'Mid 2 upcoming', bg: 'var(--blue-bg)', color: 'var(--blue)' },
+                { href: '/forge', label: 'Forge', sub: 'Startup OS', bg: 'var(--orange-bg)', color: 'var(--orange)' },
+                { href: '/meetings', label: 'Meetings', sub: `${upcomingMeetings.length} upcoming`, bg: 'var(--green-bg)', color: 'var(--green)' },
+                { href: '/people', label: 'People', sub: 'CRM', bg: 'var(--yellow-bg)', color: 'var(--yellow)' },
+                { href: '/reviews', label: 'Review', sub: 'Weekly CEO', bg: 'var(--red-bg)', color: 'var(--red)' },
               ].map(item => (
                 <Link key={item.href} href={item.href}>
                   <div className="card" style={{ background: item.bg, border: 'none', padding: '12px 12px', textAlign: 'center', cursor: 'pointer' }}>
