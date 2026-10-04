@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const TaskSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   name: { type: String, required: true },
   project: { type: String, default: '' },
   area: { type: String, enum: ['Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'Forge', 'Learning', 'Health', 'Communication', ''], default: '' },
@@ -19,6 +20,14 @@ const TaskSchema = new mongoose.Schema({
   blockedBy: { type: String, default: '' },
   followUpDate: { type: Date },
   completedAt: { type: Date },
+  googleTaskId: { type: String, default: null, sparse: true },
+  googleTaskListId: { type: String, default: '' },
+  googleEtag: { type: String, default: '' },
+  sourceEmailLinkId: { type: mongoose.Schema.Types.ObjectId, ref: 'EmailTaskLink', default: null },
+  syncState: { type: String, enum: ['local_only', 'pending', 'pending_delete', 'synced', 'conflicted'], default: 'local_only' },
+  deletedAt: { type: Date, default: null },
 }, { timestamps: true });
+
+TaskSchema.index({ userId: 1, googleTaskId: 1 }, { unique: true, sparse: true });
 
 export default mongoose.models.Task || mongoose.model('Task', TaskSchema);

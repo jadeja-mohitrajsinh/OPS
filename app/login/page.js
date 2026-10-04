@@ -1,39 +1,13 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import Logo from '@/components/Logo';
 
 export default function LoginPage() {
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    if (!password) return;
-    setLoading(true);
-    setError('');
-
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        router.push('/');
-        router.refresh();
-      } else {
-        setError(data.error || 'Invalid password');
-      }
-    } catch (err) {
-      setError('Connection error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    setError(new URLSearchParams(window.location.search).get('error') || '');
+  }, []);
 
   return (
     <div
@@ -66,7 +40,7 @@ export default function LoginPage() {
             <Logo size="lg" />
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-            Enter your master password to access your dashboard
+            Sign in with your primary Google account to access your workspace
           </p>
         </div>
 
@@ -86,33 +60,16 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div>
-            <label className="label">Master Password</label>
-            <input
-              type="password"
-              className="input"
-              style={{ fontSize: 14, padding: '12px 14px' }}
-              placeholder="Enter password..."
-              autoFocus
-              required
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
-          </div>
+        <a
+          href="/api/auth/google/start?connectionType=primary_tasks"
+          className="btn btn-primary"
+          style={{ padding: '12px', fontSize: 14, fontWeight: 700, justifyContent: 'center', textDecoration: 'none' }}
+        >
+          Continue with Google →
+        </a>
 
-          <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ padding: '12px', fontSize: 14, fontWeight: 700, justifyContent: 'center' }}
-            disabled={loading}
-          >
-            {loading ? 'Unlocking...' : 'Unlock OS →'}
-          </button>
-        </form>
-
-        <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>
-          Default password: <code style={{ background: 'var(--surface-2)', padding: '2px 6px', borderRadius: 4 }}>admin123</code> (customizable in <code>.env.local</code>)
+        <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+          Your primary account owns Google Tasks. Additional Gmail inboxes are connected later with separate consent.
         </div>
       </div>
     </div>
