@@ -12,81 +12,14 @@ export default function Logo({ size = 'md', showText = true, subtitle = 'Persona
 
   return (
     <div className={`ops-logo-container ${className}`} style={{ display: 'inline-flex', alignItems: 'center', gap: config.gap, userSelect: 'none' }}>
-      {/* ── Modern Geometric OPS Icon ── */}
-      <svg
+      {/* ── OPS Logo Image ── */}
+      <img
+        src="/ops.png"
+        alt="OPS Logo"
         width={config.iconSize}
         height={config.iconSize}
-        viewBox="0 0 48 48"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        style={{ flexShrink: 0 }}
-      >
-        <defs>
-          <linearGradient id="opsGradPrimary" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#ff4d43" />
-            <stop offset="50%" stopColor="#e32d23" />
-            <stop offset="100%" stopColor="#911d18" />
-          </linearGradient>
-          <linearGradient id="opsGradAccent" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="100%" stopColor="#ffb3ae" />
-          </linearGradient>
-          <filter id="opsGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#ff3b30" floodOpacity="0.35" />
-          </filter>
-        </defs>
-
-        {/* Outer Rounded Container */}
-        <rect
-          x="2"
-          y="2"
-          width="44"
-          height="44"
-          rx="12"
-          fill="url(#opsGradPrimary)"
-          filter="url(#opsGlow)"
-        />
-
-        {/* Inner Subtle Border */}
-        <rect
-          x="3.5"
-          y="3.5"
-          width="41"
-          height="41"
-          rx="10.5"
-          stroke="rgba(255, 255, 255, 0.25)"
-          strokeWidth="1.5"
-        />
-
-        {/* OPS Monogram Path (Bold, Geometric & Clean) */}
-        {/* Letter O */}
-        <path
-          d="M13 18C13 15.2386 15.2386 13 18 13C20.7614 13 23 15.2386 23 18V30C23 32.7614 20.7614 35 18 35C15.2386 35 13 32.7614 13 30V18Z"
-          stroke="#ffffff"
-          strokeWidth="3.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        {/* Central Pulse / Spark Accent Dot */}
-        <circle cx="18" cy="24" r="2" fill="url(#opsGradAccent)" />
-
-        {/* Letter P & S Connected Geometric Circuit */}
-        <path
-          d="M27 34V14H33C35.2091 14 37 15.7909 37 18C37 20.2091 35.2091 22 33 22H27"
-          stroke="#ffffff"
-          strokeWidth="3.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M36 26C36 26 34.5 25 32 25C29.5 25 28 26.5 28 28.5C28 31 31 31.5 33 32C35 32.5 36 33.5 36 35C36 37 34 38 31.5 38C29 38 27.5 37 27.5 37"
-          stroke="url(#opsGradAccent)"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+        style={{ flexShrink: 0, objectFit: 'contain' }}
+      />
 
       {/* ── Text Branding ── */}
       {showText && (

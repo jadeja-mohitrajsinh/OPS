@@ -37,11 +37,23 @@ export async function GET(request) {
     });
 
     if (state.connectionType === 'primary_tasks') {
-      const user = await User.findOneAndUpdate(
-        { primaryGoogleSubject: profile.sub },
-        { $set: { primaryEmail: profile.email, displayName: profile.name } },
-        { new: true, upsert: true, setDefaultsOnInsert: true },
-      );
+      let user;
+      if (state.userId) {
+        // User is already logged in, update their primary connection
+        user = await User.findById(state.userId);
+        if (!user) return redirectWithError(request, 'User not found.');
+        user.primaryGoogleSubject = profile.sub;
+        user.primaryEmail = profile.email;
+        user.displayName = profile.name;
+        await user.save();
+      } else {
+        // New user or sign-in
+        user = await User.findOneAndUpdate(
+          { primaryGoogleSubject: profile.sub },
+          { $set: { primaryEmail: profile.email, displayName: profile.name } },
+          { new: true, upsert: true, setDefaultsOnInsert: true },
+        );
+      }
       const connection = await OAuthConnection.findOneAndUpdate(
         { userId: user._id, connectionType: 'primary_tasks' },
         { $set: { provider: 'google', googleSubject: profile.sub, email: profile.email, scopes: ['https://www.googleapis.com/auth/tasks'], encryptedTokens, status: 'active' } },
@@ -51,8 +63,10 @@ export async function GET(request) {
         user.primaryTaskConnectionId = connection._id;
         await user.save();
       }
-      const response = NextResponse.redirect(new URL('/', request.url));
-      response.cookies.set({ name: SESSION_COOKIE, value: await createSession(user), httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 60 * 60 * 8 });
+      const response = NextResponse.redirect(new URL('/tasks', request.url));
+      if (!state.userId) {
+        response.cookies.set({ name: SESSION_COOKIE, value: await createSession(user), httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 60 * 60 * 8 });
+      }
       return response;
     }
 

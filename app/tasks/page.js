@@ -180,9 +180,6 @@ export default function TasksPage() {
   const [filterArea, setFilterArea] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
   const [filterStatus, setFilterStatus] = useState('active');
-  const [connections, setConnections] = useState([]);
-  const [syncing, setSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState('');
   const [taskPendingDelete, setTaskPendingDelete] = useState(null);
   const [deletingTask, setDeletingTask] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -202,13 +199,6 @@ export default function TasksPage() {
   }
 
   useEffect(() => { load(); }, [filterArea, filterPriority, filterStatus]);
-
-  useEffect(() => {
-    fetch('/api/connections')
-      .then(res => res.json())
-      .then(data => setConnections(data.success ? data.data : []))
-      .catch(() => setConnections([]));
-  }, []);
 
   // Check for ?add=1 in URL
   useEffect(() => {
@@ -248,22 +238,6 @@ export default function TasksPage() {
     }
   }
 
-  async function handleSync() {
-    setSyncing(true);
-    setSyncMessage('');
-    try {
-      const res = await fetch('/api/sync', { method: 'POST' });
-      const data = await res.json();
-      const result = data.data;
-      setSyncMessage(result ? `${result.synced} synced${result.failed ? `, ${result.failed} need attention` : ''}` : (data.error || 'Sync failed'));
-      load();
-    } catch {
-      setSyncMessage('Sync could not be started.');
-    } finally {
-      setSyncing(false);
-    }
-  }
-
   const groupedByPriority = PRIORITIES.reduce((acc, p) => {
     const group = tasks.filter(t => t.priority === p);
     if (group.length > 0) acc[p] = group;
@@ -278,18 +252,12 @@ export default function TasksPage() {
         <div>
           <h1 className="page-title">Tasks</h1>
           <p className="page-subtitle">{tasks.length} {filterStatus === 'active' ? 'active' : filterStatus}</p>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 5 }}>
-            {connections.filter(c => c.connectionType === 'primary_tasks').length ? 'Primary Google Tasks connected' : 'Google Tasks needs connection'} · {connections.filter(c => c.connectionType === 'connected_gmail').length} connected inbox{connections.filter(c => c.connectionType === 'connected_gmail').length === 1 ? '' : 'es'}
-          </p>
+
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          <a className="btn btn-secondary btn-sm" style={{ textDecoration: 'none' }} href="/api/auth/google/start?connectionType=connected_gmail">+ Connect Gmail</a>
-          <button className="btn btn-secondary btn-sm" onClick={handleSync} disabled={syncing}>{syncing ? 'Syncing...' : 'Sync Google'}</button>
           <button className="btn btn-primary btn-sm" onClick={() => { setEditing(null); setShowForm(true); }}>+ Add Task</button>
         </div>
       </div>
-
-      {syncMessage && <div style={{ marginBottom: 14, fontSize: 12, color: syncMessage.includes('need attention') || syncMessage.includes('failed') ? 'var(--orange)' : 'var(--green)' }}>{syncMessage}</div>}
 
       {/* Filters */}
       <div className="filter-row">

@@ -17,9 +17,7 @@ export async function GET(request) {
 
     const { session, response } = await requireSession(request);
     if (connectionType === 'connected_gmail' && response) return response;
-    if (connectionType === 'primary_tasks' && session) {
-      return NextResponse.json({ success: false, error: 'A primary account is already signed in. Sign out before changing it.' }, { status: 409 });
-    }
+    // Allow connecting primary_tasks even when logged in - it will update the existing user's connection
 
     const { verifier, challenge } = createPkcePair();
     const state = randomUUID();
