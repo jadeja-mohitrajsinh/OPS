@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AppShell from '@/components/AppShell';
+import AppModal from '@/components/AppModal';
 
 const STATUS_ORDER = ['ACTIVE', 'PLANNED', 'BACKLOG', 'BLOCKED', 'REVIEW', 'DONE'];
 const STATUS_COLORS = {
@@ -30,6 +31,9 @@ export default function ProjectsPage() {
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [projectPendingDelete, setProjectPendingDelete] = useState(null);
+  const [deletingProject, setDeletingProject] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   // New project form state
   const [newProject, setNewProject] = useState({
@@ -105,6 +109,23 @@ export default function ProjectsPage() {
       loadProjects();
     } catch (err) {
       console.error(err);
+    }
+  }
+
+  async function handleDeleteProject() {
+    if (!projectPendingDelete) return;
+    setDeletingProject(true);
+    setDeleteError('');
+    try {
+      const response = await fetch(`/api/projects/${projectPendingDelete._id}`, { method: 'DELETE' });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Unable to delete project');
+      setProjects(current => current.filter(project => project._id !== projectPendingDelete._id));
+      setProjectPendingDelete(null);
+    } catch (error) {
+      setDeleteError(error.message || 'Unable to delete project. Please try again.');
+    } finally {
+      setDeletingProject(false);
     }
   }
 
@@ -230,16 +251,12 @@ export default function ProjectsPage() {
                     )}
                   </div>
 
-                  <select
-                    className="input select"
-                    style={{ fontSize: 11, padding: '4px 8px', width: 'auto', flexShrink: 0 }}
-                    value={project.status}
-                    onChange={(e) => handleUpdateStatus(project._id, e.target.value)}
-                  >
-                    {STATUS_ORDER.map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    <select className="input select" style={{ fontSize: 11, padding: '4px 8px', width: 'auto' }} value={project.status} onChange={(e) => handleUpdateStatus(project._id, e.target.value)}>
+                      {STATUS_ORDER.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--red)', padding: '5px 8px' }} title={`Delete ${project.name}`} onClick={() => { setDeleteError(''); setProjectPendingDelete(project); }}>Delete</button>
+                  </div>
                 </div>
 
                 {/* Progress bar if milestones exist */}
@@ -386,6 +403,18 @@ export default function ProjectsPage() {
           </div>
         </div>
       )}
+
+      <AppModal
+        open={Boolean(projectPendingDelete)}
+        onClose={() => !deletingProject && setProjectPendingDelete(null)}
+        title="Delete project?"
+        size="sm"
+        closeOnBackdrop={!deletingProject}
+        footer={<><button className="btn btn-secondary" disabled={deletingProject} onClick={() => setProjectPendingDelete(null)}>Cancel</button><button className="btn btn-danger" disabled={deletingProject} onClick={handleDeleteProject}>{deletingProject ? 'Deleting…' : 'Delete'}</button></>}
+      >
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6 }}>Delete “{projectPendingDelete?.name}”? This cannot be undone.</p>
+        {deleteError && <p style={{ color: 'var(--red)', fontSize: 13, marginTop: 12 }}>{deleteError}</p>}
+      </AppModal>
     </AppShell>
   );
 }

@@ -16,6 +16,8 @@ const AssignmentSchema = new mongoose.Schema({
 const CollegeSubjectSchema = new mongoose.Schema({
   name: { type: String, required: true },
   code: { type: String, default: '' },
+  semester: { type: String, default: '' },
+  professor: { type: String, default: '' },
   units: [UnitSchema],
   assignments: [AssignmentSchema],
   viva: {

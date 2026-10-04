@@ -45,16 +45,8 @@ export default function CalendarPlanningPage() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Planned items storage per date { [dateStr]: [items] }
-  const [plannedWork, setPlannedWork] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('ops_calendar_plans_v2');
-        if (saved) return JSON.parse(saved);
-      } catch {}
-    }
-    return {};
-  });
+  // Account-scoped planned items per date { [dateStr]: [items] }
+  const [plannedWork, setPlannedWork] = useState({});
 
   // Today timeline items for syncing today's load
   const [todayTimeline, setTodayTimeline] = useState(() => {
@@ -67,12 +59,31 @@ export default function CalendarPlanningPage() {
     return [];
   });
 
-  // Save planned work
+  // Load the account's plans once and import legacy browser-only data only when
+  // that date is not already present on the server. The server is authoritative.
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ops_calendar_plans_v2', JSON.stringify(plannedWork));
+    let active = true;
+    async function loadPlans() {
+      let legacyPlans = {};
+      try { legacyPlans = JSON.parse(localStorage.getItem('ops_calendar_plans_v2') || '{}'); } catch {}
+      try {
+        const response = await fetch('/api/calendar-plans');
+        const payload = await response.json();
+        if (!payload.success) return;
+        const serverPlans = payload.data || {};
+        const missingLegacyDates = Object.entries(legacyPlans).filter(([date, items]) => !serverPlans[date] && Array.isArray(items));
+        await Promise.all(missingLegacyDates.map(([date, items]) => fetch(`/api/calendar-plans?date=${date}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items }),
+        })));
+        if (active) setPlannedWork({ ...legacyPlans, ...serverPlans });
+        if (missingLegacyDates.length) localStorage.removeItem('ops_calendar_plans_v2');
+      } catch (error) {
+        console.error('Could not load calendar plans:', error);
+      }
     }
-  }, [plannedWork]);
+    loadPlans();
+    return () => { active = false; };
+  }, []);
 
   // Load Data
   async function loadData() {
@@ -223,6 +234,11 @@ export default function CalendarPlanningPage() {
 
   // Selected Day Workload Data
   const selectedWorkload = getDayWorkload(selectedDate);
+  const selectedItems = [
+    ...selectedWorkload.meetings.map(item => ({ id: `meeting-${item._id || item.title}`, label: item.title || item.name || 'Meeting', time: item.time || item.startTime || '', kind: 'Meeting' })),
+    ...selectedWorkload.tasks.map(item => ({ id: `task-${item._id || item.title}`, label: item.title || 'Task', time: item.time || '', kind: 'Task' })),
+    ...selectedWorkload.plans.map((item, index) => ({ id: `plan-${item._id || item.title || index}`, label: item.title || item.name || 'Planned item', time: item.time || item.startTime || '', kind: 'Plan' })),
+  ];
 
   // ── Upcoming Deadlines & Meetings ───────────────────────────────────────────
   const upcomingDeadlines = tasks
@@ -246,10 +262,10 @@ export default function CalendarPlanningPage() {
 
   return (
     <AppShell>
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 16px 100px 16px' }}>
+      <div className="calendar-page" style={{ width: '100%', maxWidth: 1440, margin: '0 auto', padding: '16px 16px 100px' }}>
 
         {/* ── HEADER & NAVIGATION CONTROLS ────────────────────────────────────── */}
-        <div style={{
+        <div className="calendar-planning-header" style={{
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
@@ -261,8 +277,8 @@ export default function CalendarPlanningPage() {
           padding: '16px 20px',
           borderRadius: 16,
         }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="calendar-header-copy">
+            <div className="calendar-header-kicker" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{
                 fontSize: 11,
                 fontWeight: 900,
@@ -285,8 +301,8 @@ export default function CalendarPlanningPage() {
           </div>
 
           {/* Month / View Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', background: 'var(--surface-2)', borderRadius: 10, padding: 3, border: '1px solid var(--border)' }}>
+          <div className="calendar-header-controls" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div className="calendar-view-switcher" style={{ display: 'flex', background: 'var(--surface-2)', borderRadius: 10, padding: 3, border: '1px solid var(--border)' }}>
               <button
                 onClick={() => setViewMode('month')}
                 style={{
@@ -340,7 +356,7 @@ export default function CalendarPlanningPage() {
               </button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div className="calendar-navigation" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <button
                 onClick={prevMonth}
                 style={{
@@ -395,6 +411,7 @@ export default function CalendarPlanningPage() {
             </div>
 
             <button
+              className="calendar-reminder-button"
               onClick={() => setShowReminderCenter(true)}
               style={{
                 width: 32,
@@ -420,46 +437,49 @@ export default function CalendarPlanningPage() {
         {viewMode === 'month' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20 }}>
             {/* Calendar Grid Container */}
-            <div style={{
+            <div className="calendar-grid-card" style={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',
               borderRadius: 16,
-              padding: '16px 12px',
+              padding: 20,
               boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
               overflowX: 'auto',
             }}>
               {/* Day Labels */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(36px, 1fr))', gap: 4, marginBottom: 8, textAlign: 'center' }}>
+              <div className="calendar-weekdays" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(36px, 1fr))', gap: 8, marginBottom: 10, textAlign: 'center' }}>
                 {DAY_LABELS.map(day => (
-                  <div key={day} style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  <div key={day} style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
                     {day}
                   </div>
                 ))}
               </div>
 
               {/* Day Cells */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(36px, 1fr))', gap: 4 }}>
+              <div className="calendar-month-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(36px, 1fr))', gap: 8 }}>
                 {calendarDays.map((dateStr, idx) => {
                   if (!dateStr) {
-                    return <div key={`empty_${idx}`} style={{ minHeight: 74, opacity: 0.15 }} />;
+                  return <div className="calendar-empty-cell" key={`empty_${idx}`} style={{ minHeight: 112, opacity: 0.15 }} />;
                   }
 
                   const dayNum = parseInt(dateStr.split('-')[2], 10);
                   const isToday = dateStr === todayStr;
                   const isSelected = dateStr === selectedDate;
                   const workload = getDayWorkload(dateStr);
+                  const itemCount = workload.meetingCount + workload.taskCount + workload.planCount;
 
                   return (
-                    <div
+                    <button
+                      type="button"
+                      className={`calendar-day-cell${isSelected ? ' is-selected' : ''}`}
                       key={dateStr}
                       onClick={() => {
                         setSelectedDate(dateStr);
-                        setShowDayInspector(true);
+                        if (window.matchMedia('(min-width: 641px)').matches) setShowDayInspector(true);
                       }}
                       style={{
-                        minHeight: 74,
-                        padding: '4px 6px',
-                        borderRadius: 10,
+                        minHeight: 112,
+                        padding: '9px 10px',
+                        borderRadius: 12,
                         border: isSelected
                           ? '2px solid var(--blue)'
                           : isToday
@@ -478,42 +498,46 @@ export default function CalendarPlanningPage() {
                       }}
                     >
                       {/* Top: Day number + Today indicator */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div className="calendar-day-top" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span style={{
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: isToday || isSelected ? 900 : 700,
                           color: isToday ? 'var(--purple)' : 'var(--text)',
                         }}>
                           {dayNum}
                         </span>
                         {isToday && (
-                          <span style={{ fontSize: 8, fontWeight: 900, background: 'var(--purple)', color: '#fff', padding: '1px 3px', borderRadius: 3 }}>
+                          <span className="calendar-today-badge" style={{ fontSize: 8, fontWeight: 900, background: 'var(--purple)', color: '#fff', padding: '1px 3px', borderRadius: 3 }}>
                             TODAY
                           </span>
                         )}
                       </div>
 
                       {/* Middle: Workload metrics */}
-                      <div style={{ marginTop: 2, overflow: 'hidden' }}>
+                      <div className="calendar-day-metrics" style={{ marginTop: 2, overflow: 'hidden' }}>
                         {workload.totalHours > 0 ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            <div style={{ fontSize: 10, fontWeight: 800, color: workload.statusColor, whiteSpace: 'nowrap' }}>
-                              {workload.totalHours}h
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            <div style={{ fontSize: 12, fontWeight: 850, color: workload.statusColor, whiteSpace: 'nowrap' }}>
+                              {workload.totalHours}h planned
                             </div>
-                            <div style={{ display: 'flex', gap: 3, fontSize: 9, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                              {workload.meetingCount > 0 && <span>{workload.meetingCount}👥</span>}
-                              {workload.taskCount > 0 && <span>{workload.taskCount}✓</span>}
+                            <div style={{ display: 'flex', gap: 6, fontSize: 10, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                              {workload.meetingCount > 0 && <span>{workload.meetingCount} meeting{workload.meetingCount === 1 ? '' : 's'}</span>}
+                              {workload.taskCount > 0 && <span>{workload.taskCount} task{workload.taskCount === 1 ? '' : 's'}</span>}
                             </div>
                           </div>
                         ) : (
-                          <div style={{ fontSize: 9, color: 'var(--text-muted)', opacity: 0.4 }}>
-                            Free
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', opacity: 0.72 }}>
+                            No plans yet
                           </div>
                         )}
                       </div>
 
+                      <div className="calendar-day-status" aria-label={itemCount ? `${itemCount} planned items` : 'No planned items'}>
+                        {itemCount ? `${itemCount} item${itemCount === 1 ? '' : 's'}` : '—'}
+                      </div>
+
                       {/* Bottom: Capacity load progress bar */}
-                      <div style={{ width: '100%', height: 3, background: 'var(--border)', borderRadius: 2, overflow: 'hidden', marginTop: 2 }}>
+                      <div className="calendar-day-progress" style={{ width: '100%', height: 4, background: 'var(--border)', borderRadius: 3, overflow: 'hidden', marginTop: 6 }}>
                         <div style={{
                           width: `${workload.loadPercentage}%`,
                           height: '100%',
@@ -521,18 +545,18 @@ export default function CalendarPlanningPage() {
                           borderRadius: 2,
                         }} />
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
             </div>
 
             {/* Selected Day Quick Card Summary */}
-            <div style={{
+            <div className="calendar-selected-summary" style={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',
               borderRadius: 16,
-              padding: '16px 20px',
+              padding: '18px 22px',
               display: 'flex',
               flexWrap: 'wrap',
               alignItems: 'center',
@@ -597,6 +621,26 @@ export default function CalendarPlanningPage() {
                 )}
               </div>
             </div>
+
+            <section className="calendar-mobile-day-details" aria-label="Selected day plan">
+              <div className="calendar-mobile-day-heading">
+                <span>{new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+                <small>{selectedItems.length ? `${selectedItems.length} planned item${selectedItems.length === 1 ? '' : 's'}` : 'No plans for this day'}</small>
+              </div>
+              {selectedItems.length ? (
+                <div className="calendar-mobile-day-list">
+                  {selectedItems.map(item => (
+                    <div className="calendar-mobile-day-item" key={item.id}>
+                      <span>{item.time ? fmt12(item.time) : 'Any time'}</span>
+                      <strong>{item.label}</strong>
+                      <small>{item.kind}</small>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <button className="calendar-mobile-add-item" onClick={() => setShowDayInspector(true)}>+ Add item</button>
+              )}
+            </section>
           </div>
         )}
 

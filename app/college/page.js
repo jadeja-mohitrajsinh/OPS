@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
+import AppModal from '@/components/AppModal';
 
 const STATUS_STAGES = ['NOT_STARTED', 'LEARNING', 'PRACTICED', 'REVISED', 'EXAM_READY'];
 const STATUS_COLORS = { NOT_STARTED: 'var(--text-muted)', LEARNING: 'var(--blue)', PRACTICED: 'var(--orange)', REVISED: 'var(--purple)', EXAM_READY: 'var(--green)' };
 const MID2_COLORS = { PENDING: 'var(--orange)', COMPLETED: 'var(--green)', NOT_SCHEDULED: 'var(--text-muted)' };
 
-function SubjectCard({ subject, onUpdate }) {
+function SubjectCard({ subject, onUpdate, onDelete, onAddUnit }) {
   const [expanded, setExpanded] = useState(false);
   const [newAssignment, setNewAssignment] = useState('');
   const [assignmentDue, setAssignmentDue] = useState('');
@@ -126,6 +127,7 @@ function SubjectCard({ subject, onUpdate }) {
             )}
           </div>
         </div>
+        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--red)', padding: '5px 8px' }} onClick={() => onDelete(subject)} title={`Delete ${subject.name}`}>Delete</button>
       </div>
 
       {/* Expand */}
@@ -138,7 +140,7 @@ function SubjectCard({ subject, onUpdate }) {
           {/* Units */}
           {subject.units?.length > 0 && (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>Units</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}><span>Units</span><button className="btn btn-ghost btn-sm" onClick={() => onAddUnit(subject)}>+ Add Unit</button></div>
               {subject.units.map((u, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', borderBottom: '1px solid var(--border-subtle)' }}>
                   <span style={{ flex: 1, fontSize: 13 }}>{u.name}</span>
@@ -150,6 +152,7 @@ function SubjectCard({ subject, onUpdate }) {
               ))}
             </div>
           )}
+          {!subject.units?.length && <button className="btn btn-secondary btn-sm" onClick={() => onAddUnit(subject)}>+ Add first unit</button>}
 
           {/* Assignments */}
           <div>
@@ -180,6 +183,13 @@ function SubjectCard({ subject, onUpdate }) {
 export default function CollegePage() {
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showSubjectModal, setShowSubjectModal] = useState(false);
+  const [subjectForm, setSubjectForm] = useState({ name: '', code: '', semester: '', professor: '' });
+  const [unitSubject, setUnitSubject] = useState(null);
+  const [unitName, setUnitName] = useState('');
+  const [deleteSubject, setDeleteSubject] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
 
   async function load() {
     setLoading(true);
@@ -191,6 +201,43 @@ export default function CollegePage() {
 
   useEffect(() => { load(); }, []);
 
+  async function createSubject(event) {
+    event.preventDefault();
+    if (!subjectForm.name.trim()) { setFormError('Subject name is required.'); return; }
+    setSaving(true); setFormError('');
+    try {
+      const response = await fetch('/api/college', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...subjectForm, name: subjectForm.name.trim(), units: [] }) });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Unable to create subject');
+      setShowSubjectModal(false); setSubjectForm({ name: '', code: '', semester: '', professor: '' }); load();
+    } catch (error) { setFormError(error.message || 'Unable to create subject'); } finally { setSaving(false); }
+  }
+
+  async function createUnit(event) {
+    event.preventDefault();
+    if (!unitSubject || !unitName.trim()) return;
+    setSaving(true); setFormError('');
+    try {
+      const units = [...(unitSubject.units || []), { name: unitName.trim(), status: 'NOT_STARTED' }];
+      const response = await fetch(`/api/college/${unitSubject._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ units }) });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Unable to add unit');
+      setUnitSubject(null); setUnitName(''); load();
+    } catch (error) { setFormError(error.message || 'Unable to add unit'); } finally { setSaving(false); }
+  }
+
+  async function removeSubject() {
+    if (!deleteSubject) return;
+    setSaving(true); setFormError('');
+    try {
+      const response = await fetch(`/api/college/${deleteSubject._id}`, { method: 'DELETE' });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Unable to delete subject');
+      setSubjects(current => current.filter(subject => subject._id !== deleteSubject._id));
+      setDeleteSubject(null);
+    } catch (error) { setFormError(error.message || 'Unable to delete subject'); } finally { setSaving(false); }
+  }
+
   const examReadyCount = subjects.filter(s => s.status === 'EXAM_READY').length;
   const pendingMid2 = subjects.filter(s => s.mid2Status === 'PENDING').length;
   const pendingViva = subjects.filter(s => s.viva?.status === 'NOT_SCHEDULED').length;
@@ -199,8 +246,7 @@ export default function CollegePage() {
   return (
     <AppShell>
       <div className="page-header">
-        <h1 className="page-title">College</h1>
-        <p className="page-subtitle">Current semester · Mid 2 upcoming</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}><div><h1 className="page-title">College</h1><p className="page-subtitle">Manage your subjects and syllabus</p></div><button className="btn btn-primary" onClick={() => { setFormError(''); setShowSubjectModal(true); }}>+ Add Subject</button></div>
       </div>
 
       {/* Status Banner */}
@@ -234,8 +280,11 @@ export default function CollegePage() {
       ) : subjects.length === 0 ? (
         <div className="empty-state"><div className="empty-state-icon">🎓</div><div className="empty-state-title">No subjects yet</div><div className="empty-state-desc">Run seed to load subjects</div></div>
       ) : (
-        subjects.map(s => <SubjectCard key={s._id} subject={s} onUpdate={load} />)
+        subjects.map(s => <SubjectCard key={s._id} subject={s} onUpdate={load} onDelete={setDeleteSubject} onAddUnit={(subject) => { setFormError(''); setUnitSubject(subject); }} />)
       )}
+      <AppModal open={showSubjectModal} onClose={() => !saving && setShowSubjectModal(false)} title="Add Subject" footer={<><button className="btn btn-secondary" disabled={saving} onClick={() => setShowSubjectModal(false)}>Cancel</button><button className="btn btn-primary" type="submit" form="subject-form" disabled={saving}>{saving ? 'Adding…' : 'Add Subject'}</button></>}><form id="subject-form" onSubmit={createSubject} style={{ display: 'grid', gap: 14 }}><div><label className="label">Subject Name *</label><input className="input" autoFocus value={subjectForm.name} onChange={e => setSubjectForm({ ...subjectForm, name: e.target.value })} /></div><div><label className="label">Subject Code</label><input className="input" value={subjectForm.code} onChange={e => setSubjectForm({ ...subjectForm, code: e.target.value })} /></div><div><label className="label">Semester</label><input className="input" value={subjectForm.semester} onChange={e => setSubjectForm({ ...subjectForm, semester: e.target.value })} /></div><div><label className="label">Professor</label><input className="input" value={subjectForm.professor} onChange={e => setSubjectForm({ ...subjectForm, professor: e.target.value })} /></div>{formError && <p style={{ color: 'var(--red)', fontSize: 13 }}>{formError}</p>}</form></AppModal>
+      <AppModal open={Boolean(unitSubject)} onClose={() => !saving && setUnitSubject(null)} title="Add Unit" footer={<><button className="btn btn-secondary" disabled={saving} onClick={() => setUnitSubject(null)}>Cancel</button><button className="btn btn-primary" type="submit" form="unit-form" disabled={saving}>{saving ? 'Adding…' : 'Add Unit'}</button></>}><form id="unit-form" onSubmit={createUnit}><label className="label">Unit title *</label><input className="input" autoFocus value={unitName} onChange={e => setUnitName(e.target.value)} />{formError && <p style={{ color: 'var(--red)', fontSize: 13, marginTop: 12 }}>{formError}</p>}</form></AppModal>
+      <AppModal open={Boolean(deleteSubject)} onClose={() => !saving && setDeleteSubject(null)} title="Delete subject?" footer={<><button className="btn btn-secondary" disabled={saving} onClick={() => setDeleteSubject(null)}>Cancel</button><button className="btn btn-danger" disabled={saving} onClick={removeSubject}>{saving ? 'Deleting…' : 'Delete'}</button></>}><p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>Delete “{deleteSubject?.name}”? Its units and assignments will be removed too.</p>{formError && <p style={{ color: 'var(--red)', fontSize: 13, marginTop: 12 }}>{formError}</p>}</AppModal>
     </AppShell>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import AppShell from '@/components/AppShell';
+import AppModal from '@/components/AppModal';
 
 function StatusPill({ status }) {
   const colors = {
@@ -23,6 +24,7 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [busyId, setBusyId] = useState('');
+  const [connectionPendingDisconnect, setConnectionPendingDisconnect] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,7 +63,6 @@ export default function AccountPage() {
   }
 
   async function disconnectInbox(connection) {
-    if (!window.confirm(`Disconnect ${connection.email}? Its authorization and stored inbox metadata will be removed. Tasks already created in Google Tasks will remain.`)) return;
     setBusyId(connection._id);
     setMessage('');
     try {
@@ -70,8 +71,10 @@ export default function AccountPage() {
       if (!data.success) throw new Error(data.error || 'Could not disconnect inbox.');
       setMessage(`${connection.email} was disconnected.`);
       await load();
+      return true;
     } catch (error) {
       setMessage(error.message || 'Could not disconnect inbox.');
+      return false;
     } finally {
       setBusyId('');
     }
@@ -116,11 +119,14 @@ export default function AccountPage() {
               <div><h2 style={{ fontSize: 16, margin: 0 }}>Connected Gmail inboxes</h2><p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Control each inbox without affecting your primary task workspace.</p></div>
               <a href="/api/auth/google/start?connectionType=connected_gmail" className="btn btn-secondary btn-sm" style={{ textDecoration: 'none', whiteSpace: 'nowrap' }}>Add inbox</a>
             </div>
-            {inboxes.length === 0 ? <div style={{ padding: '34px 20px', textAlign: 'center' }}><div style={{ fontSize: 28 }}>✉️</div><div style={{ fontSize: 15, fontWeight: 800, marginTop: 8 }}>No inboxes connected</div><p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: '6px auto 14px', maxWidth: 400 }}>Connect a Gmail account to use it as an email source. It will never become the owner of your Google Tasks.</p><a href="/api/auth/google/start?connectionType=connected_gmail" className="btn btn-primary btn-sm" style={{ textDecoration: 'none' }}>Connect Gmail</a></div> : <div>{inboxes.map((connection, index) => <div key={connection._id} style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, borderTop: index ? '1px solid var(--border)' : 'none', flexWrap: 'wrap' }}><div style={{ width: 38, height: 38, borderRadius: 12, display: 'grid', placeItems: 'center', background: 'var(--surface-2)', fontSize: 18 }}>✉</div><div style={{ flex: 1, minWidth: 180 }}><div style={{ fontWeight: 750, fontSize: 14 }}>{connection.email}</div><div style={{ color: 'var(--text-muted)', fontSize: 11, marginTop: 3 }}>{connection.lastSuccessfulSyncAt ? `Last synced ${new Date(connection.lastSuccessfulSyncAt).toLocaleString()}` : 'Ready for the first sync'}</div></div><StatusPill status={connection.status} /><div style={{ display: 'flex', gap: 7 }}><button className="btn btn-secondary btn-sm" disabled={busyId === connection._id} onClick={() => updateInbox(connection, connection.status === 'paused' ? 'active' : 'paused')}>{connection.status === 'paused' ? 'Resume' : 'Pause'}</button><button className="btn btn-ghost btn-sm" disabled={busyId === connection._id} style={{ color: 'var(--red)' }} onClick={() => disconnectInbox(connection)}>Disconnect</button></div></div>)}</div>}
+            {inboxes.length === 0 ? <div style={{ padding: '34px 20px', textAlign: 'center' }}><div style={{ fontSize: 28 }}>✉️</div><div style={{ fontSize: 15, fontWeight: 800, marginTop: 8 }}>No inboxes connected</div><p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: '6px auto 14px', maxWidth: 400 }}>Connect a Gmail account to use it as an email source. It will never become the owner of your Google Tasks.</p><a href="/api/auth/google/start?connectionType=connected_gmail" className="btn btn-primary btn-sm" style={{ textDecoration: 'none' }}>Connect Gmail</a></div> : <div>{inboxes.map((connection, index) => <div key={connection._id} style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, borderTop: index ? '1px solid var(--border)' : 'none', flexWrap: 'wrap' }}><div style={{ width: 38, height: 38, borderRadius: 12, display: 'grid', placeItems: 'center', background: 'var(--surface-2)', fontSize: 18 }}>✉</div><div style={{ flex: 1, minWidth: 180 }}><div style={{ fontWeight: 750, fontSize: 14 }}>{connection.email}</div><div style={{ color: 'var(--text-muted)', fontSize: 11, marginTop: 3 }}>{connection.lastSuccessfulSyncAt ? `Last synced ${new Date(connection.lastSuccessfulSyncAt).toLocaleString()}` : 'Ready for the first sync'}</div></div><StatusPill status={connection.status} /><div style={{ display: 'flex', gap: 7 }}><button className="btn btn-secondary btn-sm" disabled={busyId === connection._id} onClick={() => updateInbox(connection, connection.status === 'paused' ? 'active' : 'paused')}>{connection.status === 'paused' ? 'Resume' : 'Pause'}</button><button className="btn btn-ghost btn-sm" disabled={busyId === connection._id} style={{ color: 'var(--red)' }} onClick={() => setConnectionPendingDisconnect(connection)}>Disconnect</button></div></div>)}</div>}
           </section>
 
           <div style={{ display: 'flex', gap: 14, alignItems: 'center', justifyContent: 'space-between', padding: '18px 4px 0', flexWrap: 'wrap' }}><p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>OAuth credentials are encrypted. Removing an inbox deletes its stored authorization and inbox metadata.</p><button className="btn btn-ghost btn-sm" onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); window.location.assign('/login'); }}>Sign out</button></div>
         </>}
+      <AppModal open={Boolean(connectionPendingDisconnect)} onClose={() => !busyId && setConnectionPendingDisconnect(null)} title="Disconnect inbox?" footer={<><button className="btn btn-secondary" disabled={Boolean(busyId)} onClick={() => setConnectionPendingDisconnect(null)}>Cancel</button><button className="btn btn-danger" disabled={Boolean(busyId)} onClick={async () => { if (await disconnectInbox(connectionPendingDisconnect)) setConnectionPendingDisconnect(null); }}>{busyId ? 'Disconnecting…' : 'Disconnect'}</button></>}>
+        <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>Disconnect “{connectionPendingDisconnect?.email}”? Its authorization and stored inbox metadata will be removed. Google Tasks already created remain available.</p>
+      </AppModal>
       </div>
     </AppShell>
   );

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
+import AppModal from '@/components/AppModal';
 
 const AREAS = ['', 'Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'Forge', 'Learning', 'Health', 'Communication'];
 const PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
@@ -162,7 +163,7 @@ function TaskRow({ task, onToggle, onEdit, onDelete }) {
           <button onClick={() => onEdit(task)} className="btn btn-ghost btn-sm btn-icon" title="Edit" style={{ width: 28, height: 28 }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
-          <button onClick={() => onDelete(task._id)} className="btn btn-ghost btn-sm btn-icon" title="Delete" style={{ width: 28, height: 28, color: 'var(--text-muted)' }}>
+          <button onClick={() => onDelete(task)} className="btn btn-ghost btn-sm btn-icon" title="Delete" style={{ width: 28, height: 28, color: 'var(--text-muted)' }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
           </button>
         </div>
@@ -182,6 +183,9 @@ export default function TasksPage() {
   const [connections, setConnections] = useState([]);
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
+  const [taskPendingDelete, setTaskPendingDelete] = useState(null);
+  const [deletingTask, setDeletingTask] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   async function load() {
     setLoading(true);
@@ -227,10 +231,21 @@ export default function TasksPage() {
     load();
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Delete this task?')) return;
-    await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
-    load();
+  async function handleDelete() {
+    if (!taskPendingDelete) return;
+    setDeletingTask(true);
+    setDeleteError('');
+    try {
+      const response = await fetch(`/api/tasks/${taskPendingDelete._id}`, { method: 'DELETE' });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Could not delete task.');
+      setTaskPendingDelete(null);
+      await load();
+    } catch (error) {
+      setDeleteError(error.message || 'Could not delete task. Please try again.');
+    } finally {
+      setDeletingTask(false);
+    }
   }
 
   async function handleSync() {
@@ -308,14 +323,14 @@ export default function TasksPage() {
         </div>
       ) : filterPriority ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {tasks.map(t => <TaskRow key={t._id} task={t} onToggle={handleToggle} onEdit={t => { setEditing(t); setShowForm(true); }} onDelete={handleDelete} />)}
+          {tasks.map(t => <TaskRow key={t._id} task={t} onToggle={handleToggle} onEdit={t => { setEditing(t); setShowForm(true); }} onDelete={task => { setDeleteError(''); setTaskPendingDelete(task); }} />)}
         </div>
       ) : (
         Object.entries(groupedByPriority).map(([p, group]) => (
           <div key={p} style={{ marginBottom: 24 }}>
             <div className="section-label" style={{ marginBottom: 8 }}>{PRIORITY_NAMES[p]} <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>({group.length})</span></div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {group.map(t => <TaskRow key={t._id} task={t} onToggle={handleToggle} onEdit={t => { setEditing(t); setShowForm(true); }} onDelete={handleDelete} />)}
+              {group.map(t => <TaskRow key={t._id} task={t} onToggle={handleToggle} onEdit={t => { setEditing(t); setShowForm(true); }} onDelete={task => { setDeleteError(''); setTaskPendingDelete(task); }} />)}
             </div>
           </div>
         ))
@@ -328,6 +343,10 @@ export default function TasksPage() {
           onClose={() => { setShowForm(false); setEditing(null); }}
         />
       )}
+      <AppModal open={Boolean(taskPendingDelete)} onClose={() => !deletingTask && setTaskPendingDelete(null)} title="Delete task?" footer={<><button className="btn btn-secondary" disabled={deletingTask} onClick={() => setTaskPendingDelete(null)}>Cancel</button><button className="btn btn-danger" disabled={deletingTask} onClick={handleDelete}>{deletingTask ? 'Deleting…' : 'Delete'}</button></>}>
+        <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>Delete “{taskPendingDelete?.name}”? This cannot be undone.</p>
+        {deleteError && <p style={{ color: 'var(--red)', fontSize: 13, marginTop: 12 }}>{deleteError}</p>}
+      </AppModal>
     </AppShell>
   );
 }

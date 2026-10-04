@@ -23,16 +23,16 @@ export default function Logo({ size = 'md', showText = true, subtitle = 'Persona
       >
         <defs>
           <linearGradient id="opsGradPrimary" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#8b5cf6" />
-            <stop offset="50%" stopColor="#6d28d9" />
-            <stop offset="100%" stopColor="#4338ca" />
+            <stop offset="0%" stopColor="#ff4d43" />
+            <stop offset="50%" stopColor="#e32d23" />
+            <stop offset="100%" stopColor="#911d18" />
           </linearGradient>
           <linearGradient id="opsGradAccent" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#38bdf8" />
-            <stop offset="100%" stopColor="#818cf8" />
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#ffb3ae" />
           </linearGradient>
           <filter id="opsGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#6d28d9" floodOpacity="0.3" />
+            <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#ff3b30" floodOpacity="0.35" />
           </filter>
         </defs>
 
@@ -109,8 +109,8 @@ export default function Logo({ size = 'md', showText = true, subtitle = 'Persona
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #8b5cf6, #38bdf8)',
-                boxShadow: '0 0 6px rgba(139, 92, 246, 0.6)',
+                background: 'linear-gradient(135deg, #ff685f, #ff3b30)',
+                boxShadow: '0 0 8px rgba(255, 59, 48, 0.65)',
               }}
             />
           </div>

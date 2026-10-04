@@ -6,19 +6,6 @@ import ReminderCenter from '@/components/ReminderCenter';
 import { checkNotificationPermission, syncAllTodayReminders } from '@/lib/notifications';
 
 // ─── Constants & Color Schemes ───────────────────────────────────────────────
-const DEFAULT_TIMELINE_ITEMS = [
-  { id: 'item_1',  time: '06:00', duration: 30, title: 'Wake Up & Morning Routine', type: 'habit',   color: '#8b5cf6', completed: false },
-  { id: 'item_2',  time: '06:30', duration: 60, title: 'Exercise / Gym Session',    type: 'health',  color: '#10b981', completed: false },
-  { id: 'item_3',  time: '08:00', duration: 90, title: 'GATE Deep Study Session',   type: 'gate',    color: '#3b82f6', completed: false },
-  { id: 'item_4',  time: '10:00', duration: 180,title: 'College Lectures / Labs',    type: 'college', color: '#f59e0b', completed: false },
-  { id: 'item_5',  time: '13:00', duration: 60, title: 'Lunch & Recharge Break',     type: 'break',   color: '#6b7280', completed: false },
-  { id: 'item_6',  time: '14:00', duration: 120,title: 'Startup / Forge Work',       type: 'forge',   color: '#ec4899', completed: false },
-  { id: 'item_7',  time: '17:00', duration: 60, title: 'Gym & Fitness',              type: 'health',  color: '#10b981', completed: false },
-  { id: 'item_8',  time: '19:00', duration: 90, title: 'GATE Practice & Revision',   type: 'gate',    color: '#3b82f6', completed: false },
-  { id: 'item_9',  time: '21:00', duration: 45, title: 'Daily Review & Log',         type: 'review',  color: '#ef4444', completed: false },
-  { id: 'item_10', time: '22:00', duration: 60, title: 'Reading & Wind Down',        type: 'personal',color: '#6366f1', completed: false },
-];
-
 const HOURS = Array.from({ length: 19 }, (_, i) => {
   const h = i + 5; // 05:00 to 23:00
   return `${String(h).padStart(2, '0')}:00`;
@@ -30,7 +17,7 @@ const TYPE_CONFIG = {
   gate:     { label: 'GATE',     color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  border: '#3b82f6', icon: '🎓' },
   college:  { label: 'College',  color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: '#f59e0b', icon: '🏛️' },
   forge:    { label: 'Forge',    color: '#ec4899', bg: 'rgba(236,72,153,0.12)',  border: '#ec4899', icon: '⚡' },
-  health:   { label: 'Health',   color: '#10b981', bg: 'rgba(16,185,129,0.12)',  border: '#10b981', icon: '💪' },
+  health:   { label: 'Training', color: '#ff4d43', bg: 'rgba(255,77,67,0.14)',   border: '#ff4d43', icon: '💪' },
   habit:    { label: 'Habit',    color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  border: '#8b5cf6', icon: '✨' },
   review:   { label: 'Review',   color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   border: '#ef4444', icon: '📊' },
   break:    { label: 'Break',    color: '#6b7280', bg: 'rgba(107,114,128,0.12)', border: '#6b7280', icon: '☕' },
@@ -60,7 +47,8 @@ export default function TodayExecutionPage() {
   const [loading, setLoading] = useState(true);
 
   // Scheduled timeline items
-  const [timelineItems, setTimelineItems] = useState(DEFAULT_TIMELINE_ITEMS);
+  const [timelineItems, setTimelineItems] = useState([]);
+  const [timelineReady, setTimelineReady] = useState(false);
 
   // Live Time
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -69,24 +57,31 @@ export default function TodayExecutionPage() {
     return () => clearInterval(t);
   }, []);
 
-  // Load timeline items from localStorage after mount
+  // Load the signed-in user's real schedule. There are intentionally no sample entries.
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('ops_today_timeline_v2');
-        if (saved) {
-          setTimelineItems(JSON.parse(saved));
-        }
-      } catch {}
-    }
+    let active = true;
+    fetch(`/api/timeline?date=${todayStr()}`)
+      .then(response => response.json())
+      .then(data => {
+        if (active && data.success) setTimelineItems(Array.isArray(data.data) ? data.data : []);
+      })
+      .catch(() => {})
+      .finally(() => { if (active) setTimelineReady(true); });
+    return () => { active = false; };
   }, []);
 
-  // Persist timeline items
+  // Persist every timeline mutation to MongoDB. The debounce avoids a request per drag frame.
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ops_today_timeline_v2', JSON.stringify(timelineItems));
-    }
-  }, [timelineItems]);
+    if (!timelineReady) return undefined;
+    const saveTimer = setTimeout(() => {
+      fetch(`/api/timeline?date=${todayStr()}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: timelineItems }),
+      }).catch(() => {});
+    }, 350);
+    return () => clearTimeout(saveTimer);
+  }, [timelineItems, timelineReady]);
 
   // UI States
   const [showReminderCenter, setShowReminderCenter] = useState(false);
@@ -95,6 +90,18 @@ export default function TodayExecutionPage() {
   const [selectedHourForAdd, setSelectedHourForAdd] = useState('09:00');
   const [drawerSearch, setDrawerSearch] = useState('');
   const [drawerTab, setDrawerTab] = useState('all');
+
+  // Keep the schedule picker dismissible with the same interaction on desktop and mobile.
+  useEffect(() => {
+    if (!showScheduleDrawer) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setShowScheduleDrawer(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showScheduleDrawer]);
 
   // Notepad State
   const [noteText, setNoteText] = useState(() => {
@@ -184,6 +191,33 @@ export default function TodayExecutionPage() {
     }
   };
 
+  const saveCompletedItemToCalendar = async (item) => {
+    const date = todayStr();
+    const response = await fetch(`/api/calendar-plans?date=${date}`);
+    const payload = await response.json();
+    if (!payload.success) throw new Error(payload.error || 'Could not load calendar plans.');
+    const dayPlans = Array.isArray(payload.data?.[date]) ? payload.data[date] : [];
+    if (dayPlans.some(plan => plan.timelineItemId === item.id)) return;
+    const completedItem = {
+      id: `cal_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      timelineItemId: item.id,
+      title: item.title,
+      type: item.type,
+      hours: (item.duration || 60) / 60,
+      completed: true,
+      completedAt: new Date().toISOString(),
+      time: item.time,
+      duration: item.duration,
+    };
+    const saveResponse = await fetch(`/api/calendar-plans?date=${date}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: [...dayPlans, completedItem] }),
+    });
+    const saved = await saveResponse.json();
+    if (!saved.success) throw new Error(saved.error || 'Could not save calendar plan.');
+  };
+
   const handleToggleTimelineItem = (itemId) => {
     setTimelineItems(prev => prev.map(item => {
       if (item.id === itemId) {
@@ -192,35 +226,9 @@ export default function TodayExecutionPage() {
           handleToggleTaskComplete(item.taskId, item.completed ? 'DONE' : 'TODO');
         }
 
-        // Save completed item to calendar
+        // Keep Calendar and Today in the same account-scoped data store.
         if (nextCompleted) {
-          const today = todayStr();
-          try {
-            const savedPlans = localStorage.getItem('ops_calendar_plans_v2');
-            const plans = savedPlans ? JSON.parse(savedPlans) : {};
-            const dayPlans = plans[today] || [];
-
-            // Add completed item to calendar if not already there
-            const existingIndex = dayPlans.findIndex(p => p.timelineItemId === item.id);
-            if (existingIndex === -1) {
-              const completedItem = {
-                id: `cal_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-                timelineItemId: item.id,
-                title: item.title,
-                type: item.type,
-                hours: (item.duration || 60) / 60,
-                completed: true,
-                completedAt: new Date().toISOString(),
-                time: item.time,
-                duration: item.duration,
-              };
-              dayPlans.push(completedItem);
-              plans[today] = dayPlans;
-              localStorage.setItem('ops_calendar_plans_v2', JSON.stringify(plans));
-            }
-          } catch (e) {
-            console.error('Failed to save to calendar:', e);
-          }
+          saveCompletedItemToCalendar(item).catch(error => console.error('Failed to save to calendar:', error));
         }
 
         return { ...item, completed: nextCompleted };
@@ -339,6 +347,7 @@ export default function TodayExecutionPage() {
 
   // Drawer filtering
   const filteredTasks = tasks.filter(t => !['DONE', 'CANCELLED'].includes(t.status) && (drawerSearch ? t.title?.toLowerCase().includes(drawerSearch.toLowerCase()) : true));
+  const filteredMeetings = meetings.filter(m => drawerSearch ? m.title?.toLowerCase().includes(drawerSearch.toLowerCase()) : true);
   const filteredGate = gateSubjects.filter(g => drawerSearch ? g.name?.toLowerCase().includes(drawerSearch.toLowerCase()) : true);
   const filteredCollege = collegeSubjects.filter(c => drawerSearch ? c.name?.toLowerCase().includes(drawerSearch.toLowerCase()) : true);
   const filteredProjects = projects.filter(p => drawerSearch ? p.name?.toLowerCase().includes(drawerSearch.toLowerCase()) : true);
@@ -349,7 +358,7 @@ export default function TodayExecutionPage() {
         <div style={{ maxWidth: '100%', margin: '0 auto', padding: '0 0 80px 0', position: 'relative' }} className="today-main-content">
         
         {/* ── STICKY COMMAND HEADER ───────────────────────────────────────────── */}
-        <div style={{
+        <div className="today-command-header" style={{
           position: 'sticky',
           top: 0,
           zIndex: 40,
@@ -366,7 +375,7 @@ export default function TodayExecutionPage() {
           borderRadius: 12,
         }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="today-date-row" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{
                 fontSize: 11,
                 fontWeight: 900,
@@ -382,7 +391,7 @@ export default function TodayExecutionPage() {
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+            <div className="today-time-row" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
               <div style={{
                 fontSize: 20,
                 fontWeight: 800,
@@ -615,7 +624,7 @@ export default function TodayExecutionPage() {
                   }}
                 >
                   {/* Left: Hour Label */}
-                  <div style={{
+                  <div className="timeline-hour-label" style={{
                     width: 72,
                     flexShrink: 0,
                     padding: '10px 12px 0 0',
@@ -697,17 +706,19 @@ export default function TodayExecutionPage() {
                     {/* Scheduled Items in this hour */}
                     {hourItems.map(item => {
                       const typeCfg = TYPE_CONFIG[item.type] || TYPE_CONFIG.task;
+                      const isTraining = item.type === 'health';
                       return (
                         <div
                           key={item.id}
+                          className="timeline-item-card"
                           draggable
                           onDragStart={(e) => handleDragStart(e, item.id)}
                           style={{
-                            background: item.completed ? 'var(--surface-2)' : 'var(--surface)',
-                            border: `1px solid ${item.completed ? 'var(--border-subtle)' : (item.color || typeCfg.border)}35`,
+                            background: item.completed ? 'var(--surface-2)' : isTraining ? 'linear-gradient(100deg, rgba(255, 77, 67, 0.14), var(--surface))' : 'var(--surface)',
+                            border: `1px solid ${item.completed ? 'var(--border-subtle)' : (item.color || typeCfg.border)}${isTraining ? '70' : '35'}`,
                             borderLeftWidth: 3,
                             borderRadius: 8,
-                            padding: '8px 10px',
+                            padding: isTraining ? '10px 12px' : '8px 10px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
@@ -719,6 +730,11 @@ export default function TodayExecutionPage() {
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
+                            {isTraining && (
+                              <span style={{ width: 26, height: 26, display: 'grid', placeItems: 'center', borderRadius: 8, background: 'rgba(255, 77, 67, 0.18)', color: '#ff6b63', fontSize: 14, flexShrink: 0 }}>
+                                💪
+                              </span>
+                            )}
                             {/* Checkbox */}
                             <button
                               onClick={(e) => {
@@ -748,8 +764,8 @@ export default function TodayExecutionPage() {
                             {/* Title & metadata */}
                             <div style={{ minWidth: 0, flex: 1 }}>
                               <div style={{
-                                fontSize: 11,
-                                fontWeight: 600,
+                                fontSize: isTraining ? 12 : 11,
+                                fontWeight: isTraining ? 800 : 600,
                                 color: item.completed ? 'var(--text-muted)' : 'var(--text)',
                                 textDecoration: item.completed ? 'line-through' : 'none',
                                 overflow: 'hidden',
@@ -759,6 +775,7 @@ export default function TodayExecutionPage() {
                                 {item.title}
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1, fontSize: 9, color: 'var(--text-muted)', fontWeight: 500 }}>
+                                {isTraining && <span style={{ color: '#ff6b63', fontWeight: 800, letterSpacing: '0.04em' }}>WORKOUT</span>}
                                 <span>{fmt12(item.time)}</span>
                                 {item.duration && <span>• {item.duration}m</span>}
                                 {item.notes && <span>• {item.notes}</span>}
@@ -828,6 +845,16 @@ export default function TodayExecutionPage() {
                     {/* Interactive empty placeholder */}
                     {hourItems.length === 0 && (
                       <div
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Schedule an item at ${fmt12(hourStr)}`}
+                        onClick={() => openScheduleAtHour(hourStr)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            openScheduleAtHour(hourStr);
+                          }
+                        }}
                         style={{
                           height: '100%',
                           minHeight: 36,
@@ -853,50 +880,41 @@ export default function TodayExecutionPage() {
           </div>
         </div>
 
-        {/* ── FLOATING SCHEDULE FAB (Mobile only) ───────────────────────────────────── */}
-        <button
-          onClick={() => openScheduleAtHour(currentTimeStr)}
-          style={{
-            position: 'fixed',
-            bottom: 'calc(var(--bottom-nav-h, 68px) + 16px)',
-            right: 20,
-            zIndex: 50,
-            background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 30,
-            padding: '12px 20px',
-            fontSize: 14,
-            fontWeight: 800,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            boxShadow: '0 8px 24px rgba(99,102,241,0.4)',
-            cursor: 'pointer',
-            transition: 'transform 0.15s ease',
-          }}
-          className="schedule-fab"
-        >
-          <span style={{ fontSize: 18 }}>＋</span>
-          <span>Schedule</span>
-        </button>
+        </div>
 
-        {/* ── DESKTOP SIDEBAR (Always visible on desktop) ───────────────────────────────────── */}
-        <div className="schedule-sidebar-desktop">
+        {/* ── DESKTOP SCHEDULING RAIL ───────────────────────────────────────── */}
+        <aside className="schedule-sidebar-desktop" aria-label="Drag items into the schedule">
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div className="schedule-rail-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
-                Schedule Item
+              <div className="schedule-rail-title" style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>
+                Schedule at {fmt12(selectedHourForAdd)}
               </div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
+              <div className="schedule-rail-subtitle" style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, marginTop: 3 }}>
                 Select task, topic, or create custom item
               </div>
+            </div>
+            <div
+              className="schedule-rail-drag-hint"
+              style={{
+                minWidth: 68,
+                display: 'grid',
+                placeItems: 'center',
+                borderRadius: 9,
+                border: '1px solid var(--border)',
+                background: 'var(--surface-2)',
+                color: 'var(--red)',
+                fontSize: 10,
+                fontWeight: 800,
+                flexShrink: 0,
+              }}
+            >
+              DRAG →
             </div>
           </div>
 
           {/* Time selector pills */}
-          <div style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 6, marginBottom: 10 }}>
+          <div className="schedule-drawer-time-chips" style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 6, marginBottom: 12 }}>
             {HOURS.map(h => (
               <button
                 key={h}
@@ -927,30 +945,30 @@ export default function TodayExecutionPage() {
             onChange={(e) => setDrawerSearch(e.target.value)}
             style={{
               width: '100%',
-              padding: '8px 10px',
-              borderRadius: 6,
+              padding: '10px 12px',
+              borderRadius: 8,
               border: '1px solid var(--border)',
               background: 'var(--surface-2)',
               color: 'var(--text)',
-              fontSize: 12,
-              marginBottom: 10,
+              fontSize: 13,
+              marginBottom: 12,
               outline: 'none',
             }}
           />
 
           {/* Tabs */}
-          <div style={{ display: 'flex', gap: 4, marginBottom: 10, overflowX: 'auto' }}>
-            {['all', 'tasks', 'gate', 'college', 'projects'].map(tab => (
+          <div className="schedule-drawer-filters" style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto' }}>
+            {['all', 'tasks', 'events', 'gate', 'college', 'projects'].map(tab => (
               <button
                 key={tab}
                 onClick={() => setDrawerTab(tab)}
                 style={{
-                  padding: '4px 10px',
+                  padding: '6px 11px',
                   borderRadius: 14,
                   border: drawerTab === tab ? '1px solid var(--purple)' : '1px solid var(--border)',
                   background: drawerTab === tab ? 'var(--purple)' : 'var(--surface-2)',
                   color: drawerTab === tab ? '#ffffff' : 'var(--text-muted)',
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: 600,
                   textTransform: 'capitalize',
                   cursor: 'pointer',
@@ -964,7 +982,7 @@ export default function TodayExecutionPage() {
           </div>
 
           {/* Items List */}
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="schedule-drawer-results" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: 8, paddingRight: 2 }}>
             {/* Custom quick task creator */}
             {drawerSearch && (
               <div
@@ -1024,7 +1042,7 @@ export default function TodayExecutionPage() {
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {task.title}
+                    <span title={task.title}>{task.title}</span>
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
                     {task.priority || 'P2'} • {task.project || 'General'}
@@ -1044,6 +1062,31 @@ export default function TodayExecutionPage() {
                     flexShrink: 0,
                   }}
                 >
+                  ＋ Add
+                </button>
+              </div>
+            ))}
+
+            {/* Meetings & events */}
+            {(drawerTab === 'all' || drawerTab === 'events') && filteredMeetings.map(meeting => (
+              <div
+                key={meeting._id}
+                draggable
+                onDragStart={(e) => handleSidebarDragStart(e, { ...meeting, title: meeting.title, type: 'meeting', duration: meeting.duration || 60, color: '#ff5a52' })}
+                style={{
+                  padding: '8px 10px', borderRadius: 6, background: 'var(--surface-2)', border: '1px solid var(--border)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'grab',
+                }}
+              >
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span title={meeting.title}>Event: {meeting.title}</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
+                    {meeting.time || meeting.startTime || 'Today'} • {meeting.people?.length || 0} attendees
+                  </div>
+                </div>
+                <button onClick={() => handleAddItemToHour({ ...meeting, title: meeting.title, type: 'meeting', duration: meeting.duration || 60, color: '#ff5a52' }, selectedHourForAdd)} style={{ background: 'var(--red)', color: '#fff', border: 'none', borderRadius: 5, padding: '5px 8px', fontSize: 10, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
                   ＋ Add
                 </button>
               </div>
@@ -1069,7 +1112,7 @@ export default function TodayExecutionPage() {
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {g.name}
+                    <span title={g.name}>{g.name}</span>
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
                     {g.subject || 'GATE 2027'} • {g.progress || 0}% complete
@@ -1114,7 +1157,7 @@ export default function TodayExecutionPage() {
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {c.name}
+                    <span title={c.name}>{c.name}</span>
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
                     {c.code || 'Subject'} • {c.credits || 3} credits
@@ -1159,7 +1202,7 @@ export default function TodayExecutionPage() {
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {p.name}
+                    <span title={p.name}>{p.name}</span>
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
                     {p.status || 'Active'} • {p.description || 'Sprint focus'}
@@ -1183,8 +1226,15 @@ export default function TodayExecutionPage() {
                 </button>
               </div>
             ))}
+
+            {!drawerSearch && filteredTasks.length === 0 && filteredMeetings.length === 0 && filteredGate.length === 0 && filteredCollege.length === 0 && filteredProjects.length === 0 && (
+              <div className="schedule-empty-state">
+                <span>Nothing ready to schedule</span>
+                <small>Add a task, event, or project to see it here.</small>
+              </div>
+            )}
           </div>
-        </div>
+        </aside>
 
         {/* ── MOBILE BOTTOM SHEET (Conditional on showScheduleDrawer) ─────────────────────────────────── */}
         {showScheduleDrawer && (
@@ -1244,7 +1294,7 @@ export default function TodayExecutionPage() {
               </div>
 
               {/* Time selector pills */}
-              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 10, marginBottom: 10 }}>
+              <div className="schedule-drawer-time-chips" style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 10, marginBottom: 10 }}>
                 {HOURS.map(h => (
                   <button
                     key={h}
@@ -1286,7 +1336,7 @@ export default function TodayExecutionPage() {
               />
 
               {/* Tabs */}
-              <div style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto' }}>
+              <div className="schedule-drawer-filters" style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto' }}>
                 {['all', 'tasks', 'gate', 'college', 'projects'].map(tab => (
                   <button
                     key={tab}
@@ -1311,7 +1361,7 @@ export default function TodayExecutionPage() {
               </div>
 
               {/* Items List */}
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '45vh' }}>
+              <div className="schedule-drawer-results" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {/* Custom quick task creator */}
                 {drawerSearch && (
                   <div style={{
@@ -1364,7 +1414,7 @@ export default function TodayExecutionPage() {
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {task.title}
+                        <span title={task.title}>{task.title}</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
                         {task.priority || 'P2'} • {task.project || 'General'}
@@ -1406,7 +1456,7 @@ export default function TodayExecutionPage() {
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        GATE: {g.name}
+                        <span title={`GATE: ${g.name}`}>GATE: {g.name}</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
                         {g.code || 'Study Block'} • Weight: {g.weightage || 'High'}
@@ -1448,7 +1498,7 @@ export default function TodayExecutionPage() {
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        College: {c.name}
+                        <span title={`College: ${c.name}`}>College: {c.name}</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
                         {c.code || 'Academic'} • Attendance: {c.attendance || '--'}%
@@ -1490,7 +1540,7 @@ export default function TodayExecutionPage() {
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        Project: {p.name}
+                        <span title={`Project: ${p.name}`}>Project: {p.name}</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
                         {p.status || 'Active'} • {p.description || 'Sprint focus'}
@@ -1607,7 +1657,6 @@ export default function TodayExecutionPage() {
             gateTopics={gateSubjects}
           />
         )}
-        </div>
       </div>
     </AppShell>
   );

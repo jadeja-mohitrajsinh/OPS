@@ -453,9 +453,10 @@ export default function AppShell({ children, overdueBadge = 0 }) {
           </Link>
         ))}
         <button
+          type="button"
           className={`nav-item ${MORE_ITEMS.some(i => isActive(i.href)) ? 'active' : ''}`}
           onClick={() => setMoreMenuOpen(true)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', font: 'inherit' }}
+          aria-label="Open more navigation options"
         >
           <Icon name="more" size={22} />
           More

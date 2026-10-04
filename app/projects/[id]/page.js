@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AppShell from '@/components/AppShell';
+import AppModal from '@/components/AppModal';
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
@@ -14,6 +15,9 @@ export default function ProjectDetailPage() {
   const [newRisk, setNewRisk] = useState('');
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesContent, setNotesContent] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   async function loadProject() {
     try {
@@ -51,12 +55,16 @@ export default function ProjectDetailPage() {
   }
 
   async function handleDelete() {
-    if (!confirm('Are you sure you want to delete this project?')) return;
+    setDeleting(true);
+    setDeleteError('');
     try {
-      await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+      const response = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Unable to delete project');
       router.push('/projects');
     } catch (err) {
-      console.error(err);
+      setDeleteError(err.message || 'Unable to delete project. Please try again.');
+      setDeleting(false);
     }
   }
 
@@ -122,7 +130,7 @@ export default function ProjectDetailPage() {
           ← Back to Projects
         </Link>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost btn-sm" onClick={handleDelete} style={{ color: 'var(--red)' }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => { setDeleteError(''); setShowDeleteDialog(true); }} style={{ color: 'var(--red)' }}>
             Delete
           </button>
         </div>
@@ -360,6 +368,17 @@ export default function ProjectDetailPage() {
           </div>
         )}
       </div>
+      <AppModal
+        open={showDeleteDialog}
+        onClose={() => !deleting && setShowDeleteDialog(false)}
+        title="Delete project?"
+        size="sm"
+        closeOnBackdrop={!deleting}
+        footer={<><button className="btn btn-secondary" disabled={deleting} onClick={() => setShowDeleteDialog(false)}>Cancel</button><button className="btn btn-danger" disabled={deleting} onClick={handleDelete}>{deleting ? 'Deleting…' : 'Delete'}</button></>}
+      >
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6 }}>Delete “{project?.name}”? This cannot be undone.</p>
+        {deleteError && <p style={{ color: 'var(--red)', fontSize: 13, marginTop: 12 }}>{deleteError}</p>}
+      </AppModal>
     </AppShell>
   );
 }
