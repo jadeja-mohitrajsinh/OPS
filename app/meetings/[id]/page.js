@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import Link from 'next/link';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 const PRIORITY_COLORS = { P0: 'var(--red)', P1: 'var(--orange)', P2: 'var(--blue)', P3: 'var(--text-muted)' };
 
@@ -65,6 +66,17 @@ export default function MeetingDetailPage() {
 
   async function handleDelete() {
     if (!confirm('Delete this meeting?')) return;
+    
+    // Cancel notifications before deleting
+    try {
+      const isCapacitor = typeof window !== 'undefined' && 'Capacitor' in window;
+      if (isCapacitor && meeting.notificationIds) {
+        await LocalNotifications.cancel({ notifications: meeting.notificationIds });
+      }
+    } catch (error) {
+      console.log('Failed to cancel notifications:', error);
+    }
+    
     await fetch(`/api/meetings/${id}`, { method: 'DELETE' });
     router.push('/meetings');
   }

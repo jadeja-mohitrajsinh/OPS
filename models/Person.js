@@ -8,6 +8,7 @@ const CommitmentSchema = new mongoose.Schema({
 });
 
 const PersonSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   name: { type: String, required: true },
   role: { type: String, default: '' },
   organization: { type: String, default: '' },

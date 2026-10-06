@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import AppModal from '@/components/AppModal';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 const AREAS = ['', 'Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'Forge', 'Learning', 'Health', 'Communication'];
 const PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
@@ -183,6 +184,8 @@ export default function TasksPage() {
   const [taskPendingDelete, setTaskPendingDelete] = useState(null);
   const [deletingTask, setDeletingTask] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [notificationPermission, setNotificationPermission] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -205,14 +208,141 @@ export default function TasksPage() {
     if (typeof window !== 'undefined' && window.location.search.includes('add')) setShowForm(true);
   }, []);
 
+  // Initialize notifications on mobile
+  useEffect(() => {
+    async function init() {
+      try {
+        // Check if we're in a Capacitor environment (mobile app)
+        const isCapacitor = typeof window !== 'undefined' && 'Capacitor' in window;
+        if (isCapacitor) {
+          setIsMobile(true);
+          const result = await LocalNotifications.checkPermissions();
+          setNotificationPermission(result.display);
+        }
+      } catch (error) {
+        console.log('Not on mobile or Capacitor not available');
+      }
+    }
+    init();
+  }, []);
+
+  async function requestNotificationPermission() {
+    try {
+      const result = await LocalNotifications.requestPermissions();
+      setNotificationPermission(result.display);
+      return result.display === 'granted';
+    } catch (error) {
+      console.error('Failed to request permission:', error);
+      return false;
+    }
+  }
+
+  async function scheduleNotifications(task) {
+    if (!isMobile || notificationPermission !== 'granted' || !task.deadline) return;
+    
+    try {
+      const deadline = new Date(task.deadline);
+      const now = new Date();
+      
+      if (deadline <= now) return;
+      
+      const notificationId = Date.now();
+      const notificationIds = [];
+      
+      // Schedule at deadline
+      await LocalNotifications.schedule({
+        notifications: [{
+          id: notificationId,
+          title: 'Task Due: ' + task.name,
+          body: `Your task "${task.name}" is due now!`,
+          schedule: { at: deadline },
+          smallIcon: 'ic_stat_ops',
+          largeIcon: 'ic_launcher',
+          extra: { taskId: task._id },
+        }],
+      });
+      notificationIds.push(notificationId);
+      
+      // Schedule 1 hour before
+      const reminder1h = new Date(deadline.getTime() - 60 * 60 * 1000);
+      if (reminder1h > now) {
+        await LocalNotifications.schedule({
+          notifications: [{
+            id: notificationId + 1,
+            title: 'Task Reminder: ' + task.name,
+            body: `Your task "${task.name}" is due in 1 hour`,
+            schedule: { at: reminder1h },
+            smallIcon: 'ic_stat_ops',
+            largeIcon: 'ic_launcher',
+            extra: { taskId: task._id },
+          }],
+        });
+        notificationIds.push(notificationId + 1);
+      }
+      
+      // Schedule 1 day before
+      const reminder1d = new Date(deadline.getTime() - 24 * 60 * 60 * 1000);
+      if (reminder1d > now) {
+        await LocalNotifications.schedule({
+          notifications: [{
+            id: notificationId + 2,
+            title: 'Task Due Tomorrow: ' + task.name,
+            body: `Your task "${task.name}" is due tomorrow`,
+            schedule: { at: reminder1d },
+            smallIcon: 'ic_stat_ops',
+            largeIcon: 'ic_launcher',
+            extra: { taskId: task._id },
+          }],
+        });
+        notificationIds.push(notificationId + 2);
+      }
+      
+      // Save notification IDs to task
+      await fetch(`/api/tasks/${task._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationIds }),
+      });
+      
+      console.log('Scheduled notifications for task:', task.name);
+    } catch (error) {
+      console.error('Failed to schedule notifications:', error);
+    }
+  }
+
+  async function cancelTaskNotifications(task) {
+    if (!isMobile || !task.notificationIds || task.notificationIds.length === 0) return;
+    
+    try {
+      await LocalNotifications.cancel({ notifications: task.notificationIds });
+      console.log('Cancelled notifications for task:', task.name);
+    } catch (error) {
+      console.error('Failed to cancel notifications:', error);
+    }
+  }
+
   async function handleSave(payload) {
+    let savedTask;
     if (editing) {
-      await fetch(`/api/tasks/${editing._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      // Cancel old notifications if deadline changed
+      if (payload.deadline !== editing.deadline) {
+        await cancelTaskNotifications(editing);
+      }
+      const res = await fetch(`/api/tasks/${editing._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      savedTask = data.data;
     } else {
-      await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      savedTask = data.data;
     }
     setEditing(null);
     load();
+    
+    // Schedule notifications for new task with deadline
+    if (savedTask && savedTask.deadline) {
+      await scheduleNotifications(savedTask);
+    }
   }
 
   async function handleToggle(id, currentStatus) {
@@ -226,6 +356,9 @@ export default function TasksPage() {
     setDeletingTask(true);
     setDeleteError('');
     try {
+      // Cancel notifications before deleting
+      await cancelTaskNotifications(taskPendingDelete);
+      
       const response = await fetch(`/api/tasks/${taskPendingDelete._id}`, { method: 'DELETE' });
       const data = await response.json();
       if (!data.success) throw new Error(data.error || 'Could not delete task.');
@@ -252,7 +385,15 @@ export default function TasksPage() {
         <div>
           <h1 className="page-title">Tasks</h1>
           <p className="page-subtitle">{tasks.length} {filterStatus === 'active' ? 'active' : filterStatus}</p>
-
+          {isMobile && notificationPermission !== 'granted' && (
+            <button 
+              className="btn btn-secondary btn-sm" 
+              style={{ marginTop: 8, fontSize: 12 }}
+              onClick={requestNotificationPermission}
+            >
+              {notificationPermission === 'denied' ? 'Notifications Blocked' : 'Enable Notifications'}
+            </button>
+          )}
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <button className="btn btn-primary btn-sm" onClick={() => { setEditing(null); setShowForm(true); }}>+ Add Task</button>

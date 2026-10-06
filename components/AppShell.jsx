@@ -107,16 +107,17 @@ function GlobalSearch() {
   const [q, setQ] = useState('');
   const [results, setResults] = useState([]);
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const router = useRouter();
   const ref = useRef(null);
 
   useEffect(() => {
-    if (q.length < 2) { setResults([]); setOpen(false); return; }
+    if (q.length < 2) { setResults([]); setOpen(false); setActiveIndex(-1); return; }
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
         const data = await res.json();
-        if (data.success) { setResults(data.data); setOpen(true); }
+        if (data.success) { setResults(data.data || []); setActiveIndex(-1); setOpen(true); }
       } catch {}
     }, 300);
     return () => clearTimeout(timer);
@@ -147,6 +148,22 @@ function GlobalSearch() {
     gsoc_proposal: '/gsoc/proposals',
   };
 
+  const openResult = (result) => {
+    if (!result) return;
+    router.push(TYPE_ROUTES[result.type] || '/');
+    setOpen(false);
+    setQ('');
+    setActiveIndex(-1);
+  };
+
+  const handleSearchKeyDown = (event) => {
+    if (event.key === 'Escape') { setOpen(false); setActiveIndex(-1); return; }
+    if (!open || !results.length) return;
+    if (event.key === 'ArrowDown') { event.preventDefault(); setActiveIndex(index => Math.min(index + 1, results.length - 1)); }
+    if (event.key === 'ArrowUp') { event.preventDefault(); setActiveIndex(index => Math.max(index - 1, 0)); }
+    if (event.key === 'Enter' && activeIndex >= 0) { event.preventDefault(); openResult(results[activeIndex]); }
+  };
+
   return (
     <div ref={ref} style={{ position: 'relative', width: '100%' }}>
       <div style={{
@@ -162,8 +179,13 @@ function GlobalSearch() {
         <input
           type="text"
           value={q}
-          onChange={e => setQ(e.target.value)}
+          onChange={e => { setQ(e.target.value); setActiveIndex(-1); }}
+          onKeyDown={handleSearchKeyDown}
           placeholder="Search everything... (Ctrl+K)"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls="global-search-results"
+          aria-activedescendant={activeIndex >= 0 ? `global-search-result-${activeIndex}` : undefined}
           style={{
             border: 'none',
             background: 'transparent',
@@ -179,7 +201,7 @@ function GlobalSearch() {
         )}
       </div>
 
-      {open && results.length > 0 && (
+      {open && (
         <div style={{
           position: 'absolute',
           top: 'calc(100% + 4px)',
@@ -192,23 +214,29 @@ function GlobalSearch() {
           zIndex: 100,
           maxHeight: 320,
           overflowY: 'auto',
-        }}>
-          {results.map(r => (
-            <div
+        }} id="global-search-results" role="listbox" aria-label="Search results">
+          {results.length === 0 ? (
+            <div style={{ padding: '14px 12px', color: 'var(--text-muted)', fontSize: 13 }}>No matching tasks, projects, people, or notes.</div>
+          ) : results.map((r, index) => (
+            <button
               key={`${r.type}-${r._id}`}
-              onClick={() => {
-                const route = TYPE_ROUTES[r.type] || '/';
-                router.push(route);
-                setOpen(false);
-                setQ('');
-              }}
+              id={`global-search-result-${index}`}
+              type="button"
+              role="option"
+              aria-selected={activeIndex === index}
+              onMouseEnter={() => setActiveIndex(index)}
+              onClick={() => openResult(r)}
               style={{
+                width: '100%',
                 padding: '8px 12px',
                 borderBottom: '1px solid var(--border-subtle)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                textAlign: 'left',
+                background: activeIndex === index ? 'var(--surface-2)' : 'transparent',
+                color: 'var(--text)',
               }}
               className="search-item"
             >
@@ -233,7 +261,7 @@ function GlobalSearch() {
               }}>
                 {r.type}
               </span>
-            </div>
+            </button>
           ))}
         </div>
       )}

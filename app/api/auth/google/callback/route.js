@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import { createSession, SESSION_COOKIE } from '@/lib/auth';
+import { createSession, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from '@/lib/auth';
 import { encryptJson } from '@/lib/oauth-crypto';
 import { exchangeCode } from '@/lib/google-oauth';
 import User from '@/models/User';
@@ -65,7 +65,7 @@ export async function GET(request) {
       }
       const response = NextResponse.redirect(new URL('/tasks', request.url));
       if (!state.userId) {
-        response.cookies.set({ name: SESSION_COOKIE, value: await createSession(user), httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 60 * 60 * 8 });
+        response.cookies.set({ name: SESSION_COOKIE, value: await createSession(user), httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: SESSION_MAX_AGE_SECONDS });
       }
       return response;
     }

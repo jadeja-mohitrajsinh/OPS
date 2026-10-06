@@ -11,6 +11,11 @@ function SubjectCard({ subject, onUpdate, onDelete, onAddUnit }) {
   const [expanded, setExpanded] = useState(false);
   const [newAssignment, setNewAssignment] = useState('');
   const [assignmentDue, setAssignmentDue] = useState('');
+  const [topicModal, setTopicModal] = useState(null);
+  const [topicForm, setTopicForm] = useState({ title: '', notes: '' });
+  const [topicDelete, setTopicDelete] = useState(null);
+  const [topicSaving, setTopicSaving] = useState(false);
+  const [topicError, setTopicError] = useState('');
 
   const totalUnits = subject.units?.length || 0;
   const doneUnits = subject.units?.filter(u => u.status === 'EXAM_READY').length || 0;
@@ -21,8 +26,8 @@ function SubjectCard({ subject, onUpdate, onDelete, onAddUnit }) {
     onUpdate();
   }
 
-  async function updateUnitStatus(unitName, status) {
-    const units = (subject.units || []).map(u => u.name === unitName ? { ...u, status } : u);
+  async function updateUnitStatus(unitIndex, status) {
+    const units = (subject.units || []).map((u, index) => index === unitIndex ? { ...u, status } : u);
     await fetch(`/api/college/${subject._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ units }) });
     onUpdate();
   }
@@ -50,6 +55,43 @@ function SubjectCard({ subject, onUpdate, onDelete, onAddUnit }) {
     assignments[i] = { ...assignments[i], status: assignments[i].status === 'SUBMITTED' ? 'PENDING' : 'SUBMITTED' };
     await fetch(`/api/college/${subject._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assignments }) });
     onUpdate();
+  }
+
+  async function saveTopic(event) {
+    event.preventDefault();
+    if (!topicModal || !topicForm.title.trim()) { setTopicError('Topic title is required.'); return; }
+    setTopicSaving(true); setTopicError('');
+    try {
+      const units = (subject.units || []).map((unit, unitIndex) => {
+        if (unitIndex !== topicModal.unitIndex) return unit;
+        const topics = [...(unit.topics || [])];
+        if (topicModal.topicIndex === null) topics.push({ title: topicForm.title.trim(), notes: topicForm.notes.trim(), completed: false });
+        else topics[topicModal.topicIndex] = { ...topics[topicModal.topicIndex], title: topicForm.title.trim(), notes: topicForm.notes.trim() };
+        return { ...unit, topics };
+      });
+      const response = await fetch(`/api/college/${subject._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ units }) });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'Unable to save topic.');
+      setTopicModal(null); setTopicForm({ title: '', notes: '' }); onUpdate();
+    } catch (error) { setTopicError(error.message || 'Unable to save topic.'); } finally { setTopicSaving(false); }
+  }
+
+  async function toggleTopic(unitIndex, topicIndex) {
+    const units = (subject.units || []).map((unit, currentUnitIndex) => currentUnitIndex === unitIndex ? { ...unit, topics: (unit.topics || []).map((topic, currentTopicIndex) => currentTopicIndex === topicIndex ? { ...topic, completed: !topic.completed } : topic) } : unit);
+    await fetch(`/api/college/${subject._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ units }) });
+    onUpdate();
+  }
+
+  async function deleteTopic() {
+    if (!topicDelete) return;
+    setTopicSaving(true); setTopicError('');
+    try {
+      const units = (subject.units || []).map((unit, unitIndex) => unitIndex === topicDelete.unitIndex ? { ...unit, topics: (unit.topics || []).filter((_, topicIndex) => topicIndex !== topicDelete.topicIndex) } : unit);
+      const response = await fetch(`/api/college/${subject._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ units }) });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'Unable to delete topic.');
+      setTopicDelete(null); onUpdate();
+    } catch (error) { setTopicError(error.message || 'Unable to delete topic.'); } finally { setTopicSaving(false); }
   }
 
   const pct = totalUnits > 0 ? Math.round((doneUnits / totalUnits) * 100) : 0;
@@ -142,12 +184,25 @@ function SubjectCard({ subject, onUpdate, onDelete, onAddUnit }) {
             <div style={{ marginBottom: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}><span>Units</span><button className="btn btn-ghost btn-sm" onClick={() => onAddUnit(subject)}>+ Add Unit</button></div>
               {subject.units.map((u, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <span style={{ flex: 1, fontSize: 13 }}>{u.name}</span>
-                  <select value={u.status} onChange={e => updateUnitStatus(u.name, e.target.value)}
-                    style={{ fontSize: 11, padding: '2px 6px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--surface)', color: STATUS_COLORS[u.status] }}>
-                    {STATUS_STAGES.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
-                  </select>
+                <div key={u._id || i} style={{ padding: '8px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 13 }}>{u.name}</span>
+                    <select value={u.status} onChange={e => updateUnitStatus(i, e.target.value)}
+                      style={{ fontSize: 11, padding: '2px 6px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--surface)', color: STATUS_COLORS[u.status] }}>
+                      {STATUS_STAGES.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ display: 'grid', gap: 5, margin: '8px 0 0 4px' }}>
+                    {(u.topics || []).map((topic, topicIndex) => (
+                      <div key={topic._id || topicIndex} style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+                        <button type="button" aria-label={`${topic.completed ? 'Mark incomplete' : 'Mark complete'}: ${topic.title}`} onClick={() => toggleTopic(i, topicIndex)} style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, border: topic.completed ? 'none' : '1px solid var(--border)', background: topic.completed ? 'var(--green)' : 'var(--surface-2)', color: '#fff' }}>{topic.completed ? '✓' : ''}</button>
+                        <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: topic.completed ? 'var(--text-muted)' : 'var(--text)', textDecoration: topic.completed ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{topic.title}</span>
+                        <button className="btn btn-ghost btn-sm" type="button" onClick={() => { setTopicError(''); setTopicForm({ title: topic.title, notes: topic.notes || '' }); setTopicModal({ unitIndex: i, topicIndex }); }}>Edit</button>
+                        <button className="btn btn-ghost btn-sm" type="button" style={{ color: 'var(--red)' }} onClick={() => { setTopicError(''); setTopicDelete({ unitIndex: i, topicIndex, title: topic.title }); }}>Delete</button>
+                      </div>
+                    ))}
+                    <button className="btn btn-ghost btn-sm" type="button" style={{ justifySelf: 'start', color: 'var(--blue)' }} onClick={() => { setTopicError(''); setTopicForm({ title: '', notes: '' }); setTopicModal({ unitIndex: i, topicIndex: null }); }}>+ Add Topic</button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -176,6 +231,17 @@ function SubjectCard({ subject, onUpdate, onDelete, onAddUnit }) {
           </div>
         </div>
       )}
+      <AppModal open={Boolean(topicModal)} onClose={() => !topicSaving && setTopicModal(null)} title={topicModal?.topicIndex === null ? 'Add topic' : 'Edit topic'} size="sm" footer={<><button className="btn btn-secondary" disabled={topicSaving} onClick={() => setTopicModal(null)}>Cancel</button><button className="btn btn-primary" type="submit" form={`topic-form-${subject._id}`} disabled={topicSaving}>{topicSaving ? 'Saving…' : 'Save topic'}</button></>}>
+        <form id={`topic-form-${subject._id}`} onSubmit={saveTopic} style={{ display: 'grid', gap: 12 }}>
+          <div><label className="label">Topic title *</label><input className="input" autoFocus value={topicForm.title} onChange={event => setTopicForm({ ...topicForm, title: event.target.value })} /></div>
+          <div><label className="label">Notes</label><textarea className="input textarea" rows={3} value={topicForm.notes} onChange={event => setTopicForm({ ...topicForm, notes: event.target.value })} /></div>
+          {topicError && <p role="alert" style={{ color: 'var(--red)', fontSize: 13 }}>{topicError}</p>}
+        </form>
+      </AppModal>
+      <AppModal open={Boolean(topicDelete)} onClose={() => !topicSaving && setTopicDelete(null)} title="Delete topic?" size="sm" footer={<><button className="btn btn-secondary" disabled={topicSaving} onClick={() => setTopicDelete(null)}>Cancel</button><button className="btn btn-danger" disabled={topicSaving} onClick={deleteTopic}>{topicSaving ? 'Deleting…' : 'Delete'}</button></>}>
+        <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>Delete “{topicDelete?.title}”? This cannot be undone.</p>
+        {topicError && <p role="alert" style={{ color: 'var(--red)', fontSize: 13, marginTop: 12 }}>{topicError}</p>}
+      </AppModal>
     </div>
   );
 }

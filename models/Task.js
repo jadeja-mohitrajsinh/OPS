@@ -25,6 +25,7 @@ const TaskSchema = new mongoose.Schema({
   googleEtag: { type: String, default: '' },
   sourceEmailLinkId: { type: mongoose.Schema.Types.ObjectId, ref: 'EmailTaskLink', default: null },
   syncState: { type: String, enum: ['local_only', 'pending', 'pending_delete', 'synced', 'conflicted'], default: 'local_only' },
+  notificationIds: [{ type: Number, default: [] }],
   deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 

@@ -34,6 +34,7 @@ const MeetingSchema = new mongoose.Schema({
   }],
   nextMeetingDate: { type: Date },
   nextMeetingNotes: { type: String, default: '' },
+  notificationIds: [{ type: Number, default: [] }],
 }, { timestamps: true });
 
 export default mongoose.models.Meeting || mongoose.model('Meeting', MeetingSchema);

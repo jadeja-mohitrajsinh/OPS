@@ -4,6 +4,11 @@ const UnitSchema = new mongoose.Schema({
   name: { type: String, required: true },
   status: { type: String, enum: ['NOT_STARTED', 'LEARNING', 'PRACTICED', 'REVISED', 'EXAM_READY'], default: 'NOT_STARTED' },
   notes: { type: String, default: '' },
+  topics: [{
+    title: { type: String, required: true },
+    completed: { type: Boolean, default: false },
+    notes: { type: String, default: '' },
+  }],
 });
 
 const AssignmentSchema = new mongoose.Schema({
@@ -14,6 +19,7 @@ const AssignmentSchema = new mongoose.Schema({
 });
 
 const CollegeSubjectSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   name: { type: String, required: true },
   code: { type: String, default: '' },
   semester: { type: String, default: '' },

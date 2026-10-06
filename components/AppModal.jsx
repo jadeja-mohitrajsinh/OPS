@@ -4,9 +4,11 @@ import { useEffect, useRef } from 'react';
 
 export default function AppModal({ open, onClose, title, size = 'md', children, footer, closeOnBackdrop = true }) {
   const dialogRef = useRef(null);
+  const previouslyFocusedRef = useRef(null);
 
   useEffect(() => {
     if (!open) return undefined;
+    previouslyFocusedRef.current = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     dialogRef.current?.focus();
@@ -22,7 +24,11 @@ export default function AppModal({ open, onClose, title, size = 'md', children, 
       if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     };
     document.addEventListener('keydown', onKeyDown);
-    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener('keydown', onKeyDown); };
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+      previouslyFocusedRef.current?.focus?.();
+    };
   }, [open, onClose]);
 
   if (!open) return null;

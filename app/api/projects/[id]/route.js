@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Project from '@/models/Project';
+import { requireSession } from '@/lib/require-session';
 
 export async function GET(request, { params }) {
+  const { session, response } = await requireSession(request);
+  if (response) return response;
   try {
     await dbConnect();
-    const project = await Project.findById(params.id);
+    const project = await Project.findOne({ _id: params.id, userId: session.userId });
     if (!project) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: project });
   } catch (error) {
@@ -14,10 +17,13 @@ export async function GET(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
+  const { session, response } = await requireSession(request);
+  if (response) return response;
   try {
     await dbConnect();
     const body = await request.json();
-    const project = await Project.findByIdAndUpdate(params.id, body, { new: true, runValidators: true });
+    delete body.userId;
+    const project = await Project.findOneAndUpdate({ _id: params.id, userId: session.userId }, body, { new: true, runValidators: true });
     if (!project) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: project });
   } catch (error) {
@@ -26,9 +32,12 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const { session, response } = await requireSession(request);
+  if (response) return response;
   try {
     await dbConnect();
-    await Project.findByIdAndDelete(params.id);
+    const project = await Project.findOneAndDelete({ _id: params.id, userId: session.userId });
+    if (!project) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: {} });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

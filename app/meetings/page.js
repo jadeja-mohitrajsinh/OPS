@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import Link from 'next/link';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 const STATUS_COLORS = { SCHEDULED: 'var(--blue)', COMPLETED: 'var(--green)', CANCELLED: 'var(--red)', RESCHEDULED: 'var(--orange)' };
 const STATUS_BG = { SCHEDULED: 'var(--blue-bg)', COMPLETED: 'var(--green-bg)', CANCELLED: 'var(--red-bg)', RESCHEDULED: 'var(--orange-bg)' };
@@ -427,6 +428,8 @@ export default function MeetingsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [filter, setFilter] = useState('upcoming');
+  const [notificationPermission, setNotificationPermission] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -444,14 +447,145 @@ export default function MeetingsPage() {
     if (typeof window !== 'undefined' && window.location.search.includes('add')) setShowForm(true);
   }, []);
 
+  // Initialize notifications on mobile
+  useEffect(() => {
+    async function init() {
+      try {
+        // Check if we're in a Capacitor environment (mobile app)
+        const isCapacitor = typeof window !== 'undefined' && 'Capacitor' in window;
+        if (isCapacitor) {
+          setIsMobile(true);
+          const result = await LocalNotifications.checkPermissions();
+          setNotificationPermission(result.display);
+        }
+      } catch (error) {
+        console.log('Not on mobile or Capacitor not available');
+      }
+    }
+    init();
+  }, []);
+
+  async function requestNotificationPermission() {
+    try {
+      const result = await LocalNotifications.requestPermissions();
+      setNotificationPermission(result.display);
+      return result.display === 'granted';
+    } catch (error) {
+      console.error('Failed to request permission:', error);
+      return false;
+    }
+  }
+
+  async function scheduleMeetingNotifications(meeting) {
+    if (!isMobile || notificationPermission !== 'granted' || !meeting.date || !meeting.startTime) return;
+    
+    try {
+      // Combine date and time to create a full datetime
+      const [hours, minutes] = meeting.startTime.split(':');
+      const meetingDateTime = new Date(meeting.date);
+      meetingDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      const now = new Date();
+      
+      if (meetingDateTime <= now) return;
+      
+      const notificationId = Date.now();
+      const notificationIds = [];
+      
+      // Schedule at meeting time
+      await LocalNotifications.schedule({
+        notifications: [{
+          id: notificationId,
+          title: 'Meeting: ' + meeting.title,
+          body: `Your meeting "${meeting.title}" is starting now!`,
+          schedule: { at: meetingDateTime },
+          smallIcon: 'ic_stat_ops',
+          largeIcon: 'ic_launcher',
+          extra: { meetingId: meeting._id },
+        }],
+      });
+      notificationIds.push(notificationId);
+      
+      // Schedule 1 hour before
+      const reminder1h = new Date(meetingDateTime.getTime() - 60 * 60 * 1000);
+      if (reminder1h > now) {
+        await LocalNotifications.schedule({
+          notifications: [{
+            id: notificationId + 1,
+            title: 'Meeting Reminder: ' + meeting.title,
+            body: `Your meeting "${meeting.title}" starts in 1 hour`,
+            schedule: { at: reminder1h },
+            smallIcon: 'ic_stat_ops',
+            largeIcon: 'ic_launcher',
+            extra: { meetingId: meeting._id },
+          }],
+        });
+        notificationIds.push(notificationId + 1);
+      }
+      
+      // Schedule 1 day before
+      const reminder1d = new Date(meetingDateTime.getTime() - 24 * 60 * 60 * 1000);
+      if (reminder1d > now) {
+        await LocalNotifications.schedule({
+          notifications: [{
+            id: notificationId + 2,
+            title: 'Meeting Tomorrow: ' + meeting.title,
+            body: `Your meeting "${meeting.title}" is tomorrow`,
+            schedule: { at: reminder1d },
+            smallIcon: 'ic_stat_ops',
+            largeIcon: 'ic_launcher',
+            extra: { meetingId: meeting._id },
+          }],
+        });
+        notificationIds.push(notificationId + 2);
+      }
+      
+      // Save notification IDs to meeting
+      await fetch(`/api/meetings/${meeting._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationIds }),
+      });
+      
+      console.log('Scheduled notifications for meeting:', meeting.title);
+    } catch (error) {
+      console.error('Failed to schedule notifications:', error);
+    }
+  }
+
+  async function cancelMeetingNotifications(meeting) {
+    if (!isMobile || !meeting.notificationIds || meeting.notificationIds.length === 0) return;
+    
+    try {
+      await LocalNotifications.cancel({ notifications: meeting.notificationIds });
+      console.log('Cancelled notifications for meeting:', meeting.title);
+    } catch (error) {
+      console.error('Failed to cancel notifications:', error);
+    }
+  }
+
   async function handleSave(payload) {
+    let savedMeeting;
     if (editing) {
-      await fetch(`/api/meetings/${editing._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      // Cancel old notifications if date/time changed
+      if (payload.date !== editing.date || payload.startTime !== editing.startTime) {
+        await cancelMeetingNotifications(editing);
+      }
+      const res = await fetch(`/api/meetings/${editing._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      savedMeeting = data.data;
     } else {
-      await fetch('/api/meetings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await fetch('/api/meetings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      savedMeeting = data.data;
     }
     setEditing(null);
     load();
+    
+    // Schedule notifications for new meeting with date/time
+    if (savedMeeting && savedMeeting.date && savedMeeting.startTime) {
+      await scheduleMeetingNotifications(savedMeeting);
+    }
   }
 
   const now = new Date();
@@ -469,6 +603,15 @@ export default function MeetingsPage() {
         <div>
           <h1 className="page-title">Meetings</h1>
           <p className="page-subtitle">{meetings.filter(m => new Date(m.date) >= now && m.status === 'SCHEDULED').length} upcoming</p>
+          {isMobile && notificationPermission !== 'granted' && (
+            <button 
+              className="btn btn-secondary btn-sm" 
+              style={{ marginTop: 8, fontSize: 12 }}
+              onClick={requestNotificationPermission}
+            >
+              {notificationPermission === 'denied' ? 'Notifications Blocked' : 'Enable Notifications'}
+            </button>
+          )}
         </div>
         <button className="btn btn-primary btn-sm" onClick={() => { setEditing(null); setShowForm(true); }}>+ Schedule</button>
       </div>

@@ -1,6 +1,6 @@
 # OPS Product Audit
 
-Date: 2026-10-04
+Date: 2026-10-06 (refreshed source/API audit)
 
 ## Executive Summary
 
@@ -80,6 +80,27 @@ The recommended approach is targeted: standardize the interaction primitives fir
 5. Add a shared page-container and apply it to Home, Today, Calendar, Tasks, Meetings, People, Projects, College, and Account.
 6. Audit API ownership migration entity-by-entity, with data migration and tests.
 7. Add responsive browser tests and keyboard-search coverage.
+
+## 2026-10-06 Refresh Findings
+
+### P0 — confirmed ownership boundary
+
+The current `CollegeSubject`, `Person`, `Project`, and `Meeting` schemas do not contain a `userId`; their collection and ID routes do not require a session or filter by an owner. This is a P0 privacy and data-integrity defect for a multi-account product. It must be handled through an approved, deliberate migration: add `userId`, backfill existing data, require a session, then filter every list and mutation. This audit intentionally did not make that material API/schema change.
+
+Update: College, People, and Projects now require the signed-in user and scope every collection and ID operation. College Units now persist Topic create/read/edit/delete/complete interactions. Existing unowned records are deliberately not auto-assigned, so they remain preserved but invisible until an administrator assigns their verified owner. Meetings remains pending because its route/model files were already modified in the working tree and were not overwritten by this audit pass.
+
+### P1/P2 — confirmed interaction consistency
+
+- `AppModal` is used for some core confirmations, while Projects create, People/Meetings/Tasks forms, Reminder Center, and several feature pages retain legacy modal markup.
+- Native `confirm()` calls remain in Reminder Center and numerous feature/detail pages.
+- Production compilation reports that Reminder Center imports four missing notification exports (`getStoredScheduledReminders`, `syncAllTodayReminders`, `sendTestNotification`, and `cancelAllReminders`). Until its in-progress notifications module is reconciled, reminder actions are a P1 functional regression.
+- Projects creates with legacy markup but deletes with `AppModal`, so its own CRUD flow is inconsistent.
+- Global search returns typed results but has no active result, arrow-key navigation, Enter behavior, or intentional no-result state.
+- Z-index values are scattered across inline styles and CSS; shared overlays need a tokenized layer scale.
+
+### Responsive validation status
+
+The local Next server starts successfully. The supplied in-app browser cannot reach `http://localhost:3000` from this execution environment (connection timeout), so live checks at 375, 390, 430, 768, 1024, 1280, 1440, and 1920px could not be completed. The report does not claim viewport validation; source-level responsive risks remain as described above.
 
 ## Audit Method and Limits
 

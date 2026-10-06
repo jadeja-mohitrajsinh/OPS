@@ -3,43 +3,34 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group android:translateX="18" android:translateY="18">
-        <!-- Outer Glowing Frame Background -->
+    <group android:translateX="0" android:translateY="0">
+        <!-- OPS Logo - White OP on Black Background -->
         <path
-            android:fillColor="#6d28d9"
-            android:pathData="M16,4 L56,4 A12,12 0,0 1 68,16 L68,56 A12,12 0,0 1 56,68 L16,68 A12,12 0,0 1 4,56 L4,16 A12,12 0,0 1 16,4 Z" />
+            android:fillColor="#000000"
+            android:pathData="M0,0 L108,0 L108,108 L0,108 Z" />
         
-        <!-- Outer Border -->
-        <path
-            android:strokeColor="#a78bfa"
-            android:strokeWidth="2"
-            android:pathData="M16,6 L56,6 A10,10 0,0 1 66,16 L66,56 A10,10 0,0 1 56,66 L16,66 A10,10 0,0 1 6,56 L6,16 A10,10 0,0 1 16,6 Z" />
-
         <!-- Letter O -->
         <path
             android:strokeColor="#FFFFFF"
-            android:strokeWidth="4"
+            android:strokeWidth="5"
             android:strokeLineCap="round"
             android:strokeLineJoin="round"
-            android:pathData="M20,26 C20,21.5 23.5,18 28,18 C32.5,18 36,21.5 36,26 L36,46 C36,50.5 32.5,54 28,54 C23.5,54 20,50.5 20,46 Z" />
+            android:pathData="M22,28 C22,22.5 26.5,18 32,18 C37.5,18 42,22.5 42,28 L42,80 C42,85.5 37.5,90 32,90 C26.5,90 22,85.5 22,80 Z" />
         
-        <!-- Inner Cyan Spark Point -->
+        <!-- Letter P -->
         <path
-            android:fillColor="#38bdf8"
-            android:pathData="M28,36m-3,0a3,3 0,1,1 6,0a3,3 0,1,1 -6,0" />
-
-        <!-- Letter P & S Track -->
-        <path
-            android:strokeColor="#FFFFFF"
-            android:strokeWidth="4"
+            android:strokeColor="#FF0000"
+            android:strokeWidth="5"
             android:strokeLineCap="round"
             android:strokeLineJoin="round"
-            android:pathData="M42,52 L42,20 L52,20 C55.3,20 58,22.7 58,26 C58,29.3 55.3,32 52,32 L42,32" />
+            android:pathData="M48,90 L48,18 L68,18 C74.6,18 80,23.4 80,30 C80,36.6 74.6,42 68,42 L48,42" />
+        
+        <!-- Letter S -->
         <path
-            android:strokeColor="#38bdf8"
-            android:strokeWidth="3.5"
+            android:strokeColor="#FF0000"
+            android:strokeWidth="5"
             android:strokeLineCap="round"
             android:strokeLineJoin="round"
-            android:pathData="M56,38 C56,38 54,36.5 50,36.5 C46.5,36.5 44,38.5 44,41.5 C44,45 49,46 51.5,47 C54.5,48 56,49.5 56,52 C56,55 53,56.5 49.5,56.5 C46,56.5 43.5,55 43.5,55" />
+            android:pathData="M78,50 C78,50 75,48 68,48 C61,48 58,50.5 58,54 C58,58 63,59 66.5,60 C70,61 78,62.5 78,67 C78,71.5 74,73 68,73 C62,73 58,71 58,71" />
     </group>
 </vector>

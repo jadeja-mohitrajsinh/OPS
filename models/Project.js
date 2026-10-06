@@ -7,6 +7,7 @@ const MilestoneSchema = new mongoose.Schema({
 });
 
 const ProjectSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   name: { type: String, required: true },
   objective: { type: String, default: '' },
   area: { type: String, enum: ['Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'Forge', 'Learning', ''], default: '' },

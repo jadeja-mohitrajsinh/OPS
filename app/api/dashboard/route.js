@@ -4,8 +4,12 @@ import Task from '@/models/Task';
 import Meeting from '@/models/Meeting';
 import Person from '@/models/Person';
 import { getMITs, getDeadlineCategory, daysUntil } from '@/lib/priority';
+import { requireSession } from '@/lib/require-session';
 
-export async function GET() {
+export async function GET(request) {
+  const { session, response } = await requireSession(request);
+  if (response) return response;
+
   try {
     await dbConnect();
 
@@ -14,8 +18,12 @@ export async function GET() {
     const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
     const in7days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // All active tasks
-    const allTasks = await Task.find({ status: { $in: ['TODO', 'IN_PROGRESS', 'BLOCKED'] } }).lean();
+    // All active tasks for the current user
+    const allTasks = await Task.find({ 
+      userId: session.userId, 
+      deletedAt: null,
+      status: { $in: ['TODO', 'IN_PROGRESS', 'BLOCKED'] } 
+    }).lean();
 
     // MITs — top 3 priority tasks
     const mits = getMITs(allTasks, 3);
@@ -46,6 +54,7 @@ export async function GET() {
 
     // Upcoming meetings
     const upcomingMeetings = await Meeting.find({
+      userId: session.userId,
       date: { $gte: todayStart },
       status: 'SCHEDULED',
     }).sort({ date: 1 }).limit(5).lean();
@@ -55,6 +64,7 @@ export async function GET() {
 
     // People needing follow-up
     const followUpPeople = await Person.find({
+      userId: session.userId,
       nextInteraction: { $lte: now },
     }).sort({ nextInteraction: 1 }).limit(5).lean();
 
@@ -62,7 +72,7 @@ export async function GET() {
     const blockedTasks = allTasks.filter(t => t.status === 'BLOCKED');
 
     // Waiting commitments
-    const allPeople = await Person.find({}).lean();
+    const allPeople = await Person.find({ userId: session.userId }).lean();
     const waitingFor = allPeople.flatMap(p =>
       (p.commitments || [])
         .filter(c => c.type === 'THEY_OWE' && c.status === 'OPEN')
@@ -71,6 +81,8 @@ export async function GET() {
 
     // Stats
     const completedToday = await Task.countDocuments({
+      userId: session.userId,
+      deletedAt: null,
       status: 'DONE',
       completedAt: { $gte: todayStart, $lte: todayEnd }
     });

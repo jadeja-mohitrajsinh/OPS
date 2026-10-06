@@ -61,6 +61,14 @@
   /* Nav */
   --bottom-nav-h: calc(64px + env(safe-area-inset-bottom, 0px));
   --header-h: 56px;
+
+  /* Overlay layers: page < sticky UI < menus < popovers < dialogs < notices. */
+  --z-sticky: 20;
+  --z-menu: 50;
+  --z-popover: 60;
+  --z-backdrop: 90;
+  --z-modal: 100;
+  --z-toast: 120;
 }
 
 /* ─── Dark Theme ─────────────────────────────────────────────────── */
@@ -154,6 +162,26 @@ img { max-width: 100%; display: block; }
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+}
+
+.page-container {
+  width: min(100%, 1440px);
+  margin-inline: auto;
+  padding-inline: var(--space-2);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.project-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 @media (min-width: 768px) {
@@ -1285,7 +1313,7 @@ input:focus, textarea:focus, select:focus { border-color: #ff554c !important; bo
 .app-modal-backdrop, .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1310,6 +1338,10 @@ input:focus, textarea:focus, select:focus { border-color: #ff554c !important; bo
 .app-modal-close { width: 30px; height: 30px; border-radius: 8px; color: var(--text-secondary); background: transparent; font-size: 20px; line-height: 1; }
 .app-modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding-top: 18px; margin-top: 18px; border-top: 1px solid var(--border-subtle); }
 @media (max-width: 639px) {
+  .page-container { padding-inline: var(--space-1); }
+  .page-header { align-items: stretch; flex-direction: column; }
+  .page-header > .btn { width: 100%; min-height: 44px; }
+  .project-form-grid { grid-template-columns: 1fr; }
   .app-modal-backdrop, .modal-backdrop { padding: 8px; align-items: center; }
   .app-modal, .modal-card { width: calc(100vw - 16px); max-height: calc(100vh - 16px); border-radius: 16px; padding: 18px; }
   .app-modal-footer { position: sticky; bottom: -18px; background: var(--surface); padding-bottom: 2px; }

@@ -30,6 +30,8 @@ export default function ProjectsPage() {
   const [filterArea, setFilterArea] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [creatingProject, setCreatingProject] = useState(false);
+  const [createError, setCreateError] = useState('');
   const [selectedProject, setSelectedProject] = useState(null);
   const [projectPendingDelete, setProjectPendingDelete] = useState(null);
   const [deletingProject, setDeletingProject] = useState(false);
@@ -69,6 +71,8 @@ export default function ProjectsPage() {
     e.preventDefault();
     if (!newProject.name.trim()) return;
 
+    setCreatingProject(true);
+    setCreateError('');
     try {
       const payload = {
         ...newProject,
@@ -80,22 +84,23 @@ export default function ProjectsPage() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (data.success) {
-        setShowAddModal(false);
-        setNewProject({
-          name: '',
-          objective: '',
-          area: 'Forge',
-          owner: 'Me',
-          deadline: '',
-          priority: 'P1',
-          status: 'ACTIVE',
-          tags: '',
-        });
-        loadProjects();
-      }
+      if (!res.ok || !data.success) throw new Error(data.error || 'Unable to create project. Please try again.');
+      setShowAddModal(false);
+      setNewProject({
+        name: '',
+        objective: '',
+        area: 'Forge',
+        owner: 'Me',
+        deadline: '',
+        priority: 'P1',
+        status: 'ACTIVE',
+        tags: '',
+      });
+      loadProjects();
     } catch (err) {
-      console.error(err);
+      setCreateError(err.message || 'Unable to create project. Please try again.');
+    } finally {
+      setCreatingProject(false);
     }
   }
 
@@ -142,14 +147,14 @@ export default function ProjectsPage() {
   return (
     <AppShell>
       {/* Page Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      <div className="page-header">
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px' }}>Projects</h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
             High-level initiatives, milestones & delivery tracking
           </p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+        <button className="btn btn-primary" onClick={() => { setCreateError(''); setShowAddModal(true); }}>
           + New Project
         </button>
       </div>
@@ -201,7 +206,7 @@ export default function ProjectsPage() {
         <div className="empty-state">
           <div className="empty-state-title">No projects found</div>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Create your first project or adjust filters</p>
-          <button className="btn btn-primary btn-sm" style={{ marginTop: 12 }} onClick={() => setShowAddModal(true)}>+ Create Project</button>
+          <button className="btn btn-primary btn-sm" style={{ marginTop: 12 }} onClick={() => { setCreateError(''); setShowAddModal(true); }}>+ Create Project</button>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -294,14 +299,14 @@ export default function ProjectsPage() {
       )}
 
       {/* Add Project Modal */}
-      {showAddModal && (
-        <div className="modal-backdrop" onClick={() => setShowAddModal(false)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800 }}>Create New Project</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowAddModal(false)}>✕</button>
-            </div>
-            <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <AppModal
+        open={showAddModal}
+        onClose={() => !creatingProject && setShowAddModal(false)}
+        closeOnBackdrop={!creatingProject}
+        title="Create new project"
+        footer={<><button type="button" className="btn btn-secondary" disabled={creatingProject} onClick={() => setShowAddModal(false)}>Cancel</button><button type="submit" form="create-project-form" className="btn btn-primary" disabled={creatingProject}>{creatingProject ? 'Creating…' : 'Create project'}</button></>}
+      >
+            <form id="create-project-form" onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <label className="label">Project Name *</label>
                 <input
@@ -324,7 +329,7 @@ export default function ProjectsPage() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="project-form-grid">
                 <div>
                   <label className="label">Area</label>
                   <select
@@ -356,7 +361,7 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="project-form-grid">
                 <div>
                   <label className="label">Deadline</label>
                   <input
@@ -391,18 +396,9 @@ export default function ProjectsPage() {
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Create Project
-                </button>
-              </div>
+              {createError && <p role="alert" style={{ color: 'var(--red)', fontSize: 13 }}>{createError}</p>}
             </form>
-          </div>
-        </div>
-      )}
+      </AppModal>
 
       <AppModal
         open={Boolean(projectPendingDelete)}

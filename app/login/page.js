@@ -1,13 +1,43 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import Logo from '@/components/Logo';
+import { NativeGoogleSignIn } from '@/lib/native-google-sign-in';
 
 export default function LoginPage() {
   const [error, setError] = useState('');
+  const [nativeSigningIn, setNativeSigningIn] = useState(false);
+  const isAndroidApp = Capacitor.getPlatform() === 'android';
 
   useEffect(() => {
     setError(new URLSearchParams(window.location.search).get('error') || '');
   }, []);
+
+  async function continueWithNativeGoogle() {
+    setNativeSigningIn(true);
+    setError('');
+    try {
+      const configResponse = await fetch('/api/auth/google/native', { credentials: 'include' });
+      const config = await configResponse.json();
+      if (!configResponse.ok || !config.success || !config.data?.clientId) {
+        throw new Error(config.error || 'Google Sign-In is not configured for this Android app.');
+      }
+      const credential = await NativeGoogleSignIn.signIn({ serverClientId: config.data.clientId });
+      const response = await fetch('/api/auth/google/native', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ idToken: credential.idToken }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'Google Sign-In could not be completed.');
+      window.location.assign('/tasks');
+    } catch (nativeError) {
+      setError(nativeError?.message || 'Google Sign-In was cancelled or could not be completed.');
+    } finally {
+      setNativeSigningIn(false);
+    }
+  }
 
   return (
     <div
@@ -60,16 +90,28 @@ export default function LoginPage() {
           </div>
         )}
 
-        <a
-          href="/api/auth/google/start?connectionType=primary_tasks"
-          className="btn btn-primary"
-          style={{ padding: '12px', fontSize: 14, fontWeight: 700, justifyContent: 'center', textDecoration: 'none' }}
-        >
-          Continue with Google →
-        </a>
+        {isAndroidApp ? (
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={nativeSigningIn}
+            onClick={continueWithNativeGoogle}
+            style={{ padding: '12px', fontSize: 14, fontWeight: 700, justifyContent: 'center' }}
+          >
+            {nativeSigningIn ? 'Opening Google accounts…' : 'Continue with Google'}
+          </button>
+        ) : (
+          <a
+            href="/api/auth/google/start?connectionType=primary_tasks"
+            className="btn btn-primary"
+            style={{ padding: '12px', fontSize: 14, fontWeight: 700, justifyContent: 'center', textDecoration: 'none' }}
+          >
+            Continue with Google →
+          </a>
+        )}
 
         <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-          Your primary account owns Google Tasks. Additional Gmail inboxes are connected later with separate consent.
+          Your Google identity signs you in. Google Tasks and additional Gmail inboxes require separate consent when you choose to connect them.
         </div>
       </div>
     </div>
