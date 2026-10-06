@@ -73,6 +73,7 @@ Desktop.ini
 
 # Cache
 .cache
+.gradle-build/
 .parcel-cache
 .eslintcache
 .stylelintcache

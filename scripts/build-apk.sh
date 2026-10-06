@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -e
 
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+project_root="$(cd -- "$script_dir/.." && pwd)"
+cd "$project_root"
+
+# Avoid a shared user-level Gradle lock when another Android build is running.
+export GRADLE_USER_HOME="$project_root/.gradle-build"
+
 echo "========================================="
 echo "  🚀 OPS Android APK Build Pipeline     "
 echo "========================================="
@@ -12,7 +19,7 @@ npx cap sync android
 # 2. Build via Gradle
 echo "⚙️  Step 2/3: Compiling APK via Gradle..."
 cd android
-./gradlew :app:assembleDebug
+./gradlew :app:assembleDebug --no-daemon
 cd ..
 
 # 3. Copy APK to root

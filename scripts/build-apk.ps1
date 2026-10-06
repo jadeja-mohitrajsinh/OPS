@@ -8,6 +8,12 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Split-Path -Parent $ScriptDir
 Set-Location $ProjectRoot
 
+# Keep Gradle's wrapper and dependency cache inside this checkout. This avoids
+# competing for a lock in the shared user-level .gradle folder when another
+# Android build is running.
+$env:GRADLE_USER_HOME = Join-Path $ProjectRoot ".gradle-build"
+Write-Host "[OK] Using project Gradle cache: $env:GRADLE_USER_HOME" -ForegroundColor Green
+
 # 1. Locate Java JDK 17/21 (Android Studio JBR or installed JDK)
 $JavaCandidates = @(
   "C:\Program Files\Android\Android Studio\jbr",
@@ -81,7 +87,7 @@ Write-Host "[OK] Capacitor sync completed." -ForegroundColor Green
 Write-Host ""
 Write-Host "[Step 2/3] Compiling APK via Gradle..." -ForegroundColor Yellow
 Set-Location "$ProjectRoot\android"
-.\gradlew.bat :app:assembleDebug
+.\gradlew.bat :app:assembleDebug --no-daemon
 if ($LASTEXITCODE -ne 0) {
   Write-Host "[ERROR] Gradle compilation failed." -ForegroundColor Red
   Set-Location $ProjectRoot
