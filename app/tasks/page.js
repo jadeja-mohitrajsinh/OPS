@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import AppModal from '@/components/AppModal';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { syncTasksWidget } from '@/lib/tasks-widget';
 
 const AREAS = ['', 'Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'Forge', 'Learning', 'Health', 'Communication'];
 const PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
@@ -195,6 +196,7 @@ export default function TasksPage() {
     const res = await fetch(url);
     const data = await res.json();
     let list = data.success ? data.data : [];
+    if (data.success) syncTasksWidget(data.data || []);
     if (filterStatus === 'active') list = list.filter(t => !['DONE', 'CANCELLED'].includes(t.status));
     else if (filterStatus === 'done') list = list.filter(t => t.status === 'DONE');
     setTasks(list);
@@ -207,6 +209,13 @@ export default function TasksPage() {
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.search.includes('add')) setShowForm(true);
   }, []);
+
+  useEffect(() => {
+    const taskId = new URLSearchParams(window.location.search).get('taskId');
+    if (!taskId) return;
+    const task = tasks.find(item => item._id === taskId);
+    if (task) { setEditing(task); setShowForm(true); }
+  }, [tasks]);
 
   // Initialize notifications on mobile
   useEffect(() => {
