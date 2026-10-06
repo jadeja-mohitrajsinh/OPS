@@ -9,7 +9,6 @@ import androidx.credentials.CustomCredential;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
-import androidx.credentials.exceptions.NoCredentialException;
 import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.JSObject;
@@ -33,12 +32,16 @@ public class NativeGoogleSignInPlugin extends Plugin {
       call.reject("Google Sign-In is not attached to an Android activity.");
       return;
     }
-    requestCredential(call, serverClientId, true);
+    requestCredential(call, serverClientId);
   }
 
-  private void requestCredential(PluginCall call, String serverClientId, boolean authorizedAccountsOnly) {
+  private void requestCredential(PluginCall call, String serverClientId) {
     GetGoogleIdOption googleIdOption = new GetGoogleIdOption.Builder()
-      .setFilterByAuthorizedAccounts(authorizedAccountsOnly)
+      // Keep the picker useful for account switching: Google Play services
+      // presents eligible accounts already signed into the device. We never
+      // enumerate accounts ourselves, and auto-select stays off so the user
+      // can choose rather than being silently signed into the primary account.
+      .setFilterByAuthorizedAccounts(false)
       .setServerClientId(serverClientId)
       .setAutoSelectEnabled(false)
       .build();
@@ -60,12 +63,6 @@ public class NativeGoogleSignInPlugin extends Plugin {
 
         @Override
         public void onError(GetCredentialException error) {
-          // First prefer accounts that previously authorized OPS. If none exist,
-          // fall back to the device account picker so the user can switch/add one.
-          if (authorizedAccountsOnly && error instanceof NoCredentialException) {
-            requestCredential(call, serverClientId, false);
-            return;
-          }
           call.reject(error.getMessage() != null ? error.getMessage() : "Google Sign-In was cancelled or unavailable.");
         }
       }

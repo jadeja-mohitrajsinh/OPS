@@ -1,6 +1,6 @@
 # Android native Google Sign-In
 
-OPS uses Android Credential Manager with Sign in with Google for the Capacitor Android host. The Android login page never opens the browser OAuth route. It asks Credential Manager for a Google ID token, first preferring accounts already authorized for OPS and then showing eligible device accounts if needed.
+OPS uses Android Credential Manager with Sign in with Google for the Capacitor Android host. The Android login page never opens the browser OAuth route. It asks Credential Manager for a Google ID token and shows the eligible Google accounts already signed into the device, so the user can switch accounts from the native sheet.
 
 ## Required Google Auth Platform setup
 
