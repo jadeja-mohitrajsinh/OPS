@@ -29,4 +29,10 @@
         <item name="android:backgroundDimAmount">0.18</item>
         <item name="android:colorAccent">#FF3B30</item>
     </style>
+
+    <style name="AppTheme.WidgetPicker" parent="Theme.AppCompat.DayNight.Dialog.Alert">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:colorAccent">@color/widget_accent</item>
+    </style>
 </resources>

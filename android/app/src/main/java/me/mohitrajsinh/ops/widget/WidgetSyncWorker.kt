@@ -3,14 +3,11 @@ package me.mohitrajsinh.ops.widget
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
 import androidx.work.WorkManager
-import java.util.concurrent.TimeUnit
 
 class WidgetSyncWorker(context: Context, parameters: WorkerParameters) : CoroutineWorker(context, parameters) {
   override suspend fun doWork(): Result {
@@ -25,15 +22,13 @@ class WidgetSyncWorker(context: Context, parameters: WorkerParameters) : Corouti
 }
 
 object WidgetSyncWork {
-  private const val PERIODIC_SYNC = "ops-tasks-widget-periodic-sync"
   private const val IMMEDIATE_SYNC = "ops-tasks-widget-immediate-sync"
   private val network = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
   fun schedulePeriodic(context: Context) {
-    val request = PeriodicWorkRequestBuilder<WidgetSyncWorker>(15, TimeUnit.MINUTES)
-      .setConstraints(network)
-      .build()
-    WorkManager.getInstance(context).enqueueUniquePeriodicWork(PERIODIC_SYNC, ExistingPeriodicWorkPolicy.UPDATE, request)
+    // Kept as the lifecycle entrypoint for existing callers. Sync is event driven:
+    // app mutations, widget interactions, boot, and network-constrained retries.
+    enqueueNow(context)
   }
 
   fun enqueueNow(context: Context) {
@@ -42,7 +37,6 @@ object WidgetSyncWork {
   }
 
   fun cancel(context: Context) {
-    WorkManager.getInstance(context).cancelUniqueWork(PERIODIC_SYNC)
     WorkManager.getInstance(context).cancelUniqueWork(IMMEDIATE_SYNC)
   }
 }

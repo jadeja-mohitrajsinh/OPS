@@ -20,6 +20,8 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
+import androidx.core.content.ContextCompat
+import me.mohitrajsinh.ops.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -33,13 +35,19 @@ class QuickAddTaskActivity : Activity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     val density = resources.displayMetrics.density
+    val surface = ContextCompat.getColor(this, R.color.widget_surface)
+    val surfaceMuted = ContextCompat.getColor(this, R.color.widget_surface_muted)
+    val text = ContextCompat.getColor(this, R.color.widget_text)
+    val mutedText = ContextCompat.getColor(this, R.color.widget_text_muted)
+    val accent = ContextCompat.getColor(this, R.color.widget_accent)
+    val accentText = ContextCompat.getColor(this, R.color.widget_accent_text)
     fun dp(value: Int) = (value * density).toInt()
     fun darkRound(color: Int, radius: Int = 16) = GradientDrawable().apply {
       setColor(color); cornerRadius = dp(radius).toFloat()
     }
-    fun control(text: String) = Button(this).apply {
-      this.text = text; isAllCaps = false; textSize = 13f
-      setTextColor(Color.rgb(247, 244, 242)); background = darkRound(Color.rgb(25, 25, 25), 14)
+    fun control(label: String) = Button(this).apply {
+      this.text = label; isAllCaps = false; textSize = 13f
+      setTextColor(text); background = darkRound(surfaceMuted, 14)
       minHeight = 0; minimumHeight = dp(38); setPadding(dp(10), 0, dp(10), 0)
     }
 
@@ -53,13 +61,13 @@ class QuickAddTaskActivity : Activity() {
     val sheet = LinearLayout(this).apply {
       orientation = LinearLayout.VERTICAL
       setPadding(dp(20), dp(16), dp(20), dp(16))
-      background = darkRound(Color.rgb(17, 17, 17), 26)
+      background = darkRound(surface, 26)
     }
     val listLabel = TextView(this).apply {
-      text = "My Tasks ▾"; textSize = 14f; setTextColor(Color.rgb(169, 175, 187))
+      this.text = "My Tasks ▾"; textSize = 14f; setTextColor(mutedText)
     }
     val titleInput = EditText(this).apply {
-      hint = "New task"; setHintTextColor(Color.rgb(169, 175, 187)); setTextColor(Color.WHITE)
+      hint = "New task"; setHintTextColor(mutedText); setTextColor(text)
       textSize = 20f; isSingleLine = true; imeOptions = EditorInfo.IME_ACTION_DONE
       background = ColorDrawable(Color.TRANSPARENT); setPadding(0, dp(10), 0, dp(12))
     }
@@ -67,31 +75,31 @@ class QuickAddTaskActivity : Activity() {
     val projectAdapter = object : ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, projects) {
       override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         return (super.getView(position, convertView, parent) as TextView).apply {
-          setTextColor(Color.rgb(247, 244, 242)); textSize = 13f; setPadding(dp(12), 0, dp(8), 0)
+          setTextColor(text); textSize = 13f; setPadding(dp(12), 0, dp(8), 0)
         }
       }
       override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
         return (super.getDropDownView(position, convertView, parent) as TextView).apply {
-          setTextColor(Color.rgb(247, 244, 242)); setBackgroundColor(Color.rgb(25, 25, 25)); setPadding(dp(14), dp(12), dp(14), dp(12))
+          setTextColor(text); setBackgroundColor(surfaceMuted); setPadding(dp(14), dp(12), dp(14), dp(12))
         }
       }
     }
     val projectPicker = Spinner(this).apply {
       adapter = projectAdapter
-      background = darkRound(Color.rgb(25, 25, 25), 14)
-      setPopupBackgroundDrawable(darkRound(Color.rgb(25, 25, 25), 14))
+      background = darkRound(surfaceMuted, 14)
+      setPopupBackgroundDrawable(darkRound(surfaceMuted, 14))
       setSelection(0)
     }
     val detailsInput = EditText(this).apply {
-      hint = "Details"; setHintTextColor(Color.rgb(169, 175, 187)); setTextColor(Color.WHITE)
+      hint = "Details"; setHintTextColor(mutedText); setTextColor(text)
       textSize = 15f; minLines = 2; visibility = View.GONE
-      background = darkRound(Color.rgb(25, 25, 25), 14); setPadding(dp(12), dp(8), dp(12), dp(8))
+      background = darkRound(surfaceMuted, 14); setPadding(dp(12), dp(8), dp(12), dp(8))
     }
     val detailsButton = control("☰ Details")
     val dueButton = control("◷ Due")
     val starButton = control("☆")
     val saveButton = control("Save").apply {
-      setTextColor(Color.WHITE); background = darkRound(Color.rgb(255, 59, 48), 14)
+      setTextColor(accentText); background = darkRound(accent, 14)
     }
     var starred = false
     var dueDate = ""
@@ -114,7 +122,7 @@ class QuickAddTaskActivity : Activity() {
     starButton.setOnClickListener {
       starred = !starred
       starButton.text = if (starred) "★" else "☆"
-      starButton.setTextColor(if (starred) Color.rgb(242, 184, 75) else Color.rgb(247, 244, 242))
+      starButton.setTextColor(if (starred) Color.rgb(242, 184, 75) else text)
     }
 
     fun submit() {

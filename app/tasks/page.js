@@ -53,14 +53,22 @@ function TaskForm({ onSave, onClose, initial = {} }) {
     }
   }
 
+  const requestClose = () => { if (!saving) onClose(); };
+  const formId = initial._id ? `edit-task-${initial._id}` : 'new-task';
+
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal task-editor-modal" role="dialog" aria-modal="true" aria-label={initial._id ? 'Edit task' : 'New task'}>
-        <div className="modal-header">
-          <h2 className="modal-title">{initial._id ? 'Edit Task' : 'New Task'}</h2>
-          <button className="modal-close btn" type="button" onClick={onClose} disabled={saving}>✕</button>
-        </div>
-        <form onSubmit={handleSubmit}>
+    <AppModal
+      open
+      onClose={requestClose}
+      title={initial._id ? 'Edit Task' : 'New Task'}
+      size="lg"
+      closeOnBackdrop={!saving}
+      footer={<>
+        <button type="button" className="btn btn-secondary" onClick={requestClose} disabled={saving}>Cancel</button>
+        <button type="submit" form={formId} className="btn btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save Task'}</button>
+      </>}
+    >
+        <form id={formId} onSubmit={handleSubmit} className="task-editor-form">
           <div className="form-group">
             <label className="label">Task Name *</label>
             <input className="input" value={form.name} onChange={e => set('name', e.target.value)} placeholder="What needs to be done?" autoFocus required />
@@ -127,13 +135,8 @@ function TaskForm({ onSave, onClose, initial = {} }) {
             <input className="input" value={form.tags} onChange={e => set('tags', e.target.value)} placeholder="gate, exam, urgent" />
           </div>
           {saveError && <p role="alert" style={{ color: 'var(--red)', fontSize: 13, margin: '16px 0 0' }}>{saveError}</p>}
-          <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save Task'}</button>
-          </div>
         </form>
-      </div>
-    </div>
+    </AppModal>
   );
 }
 

@@ -13,8 +13,11 @@ import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.AppWidgetId
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
+import androidx.glance.appwidget.lazy.LazyColumn
+import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.action.clickable
@@ -40,14 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.mohitrajsinh.ops.MainActivity
 
-private val FilterKey = stringPreferencesKey("task_filter")
+internal val FilterKey = stringPreferencesKey("task_filter")
 private val TaskIdKey = ActionParameters.Key<String>("task_id")
-
-enum class WidgetFilter(val value: String, val label: String) {
-  ALL("all", "All Tasks"), STARRED("starred", "Starred"), TODAY("today", "Today"), COLLEGE("college", "College"), PERSONAL("personal", "Personal");
-  fun next() = entries[(ordinal + 1) % entries.size]
-  companion object { fun from(value: String?) = entries.firstOrNull { it.value == value } ?: ALL }
-}
 
 class TasksWidget : GlanceAppWidget() {
   override val stateDefinition = PreferencesGlanceStateDefinition
@@ -59,12 +56,10 @@ class TasksWidget : GlanceAppWidget() {
   @Composable private fun WidgetContent() {
     val context = LocalContext.current
     val preferences = currentState<Preferences>()
-    val filter = WidgetFilter.from(preferences[FilterKey])
+    val filter = WidgetListFilter.resolve(preferences[FilterKey], WidgetTaskCache.availableLists(context))
     val size = LocalSize.current
     val compact = size.width < 140.dp || size.height < 92.dp
-    val matchingTasks = WidgetTaskCache.tasks(context).filter { matches(it, filter) }.sortedBy { it.completed }
-    val maxTasks = if (compact) 0 else maxOf(1, ((size.height.value - 66) / 48).toInt())
-    val tasks = matchingTasks.take(if (compact) 1 else maxTasks)
+    val tasks = WidgetTaskCache.tasks(context).filter { filter.matches(it) }.sortedBy { it.completed }
     val error = WidgetTaskCache.error(context)
 
     Box(modifier = GlanceModifier.fillMaxSize().background(WidgetPalette.surface).cornerRadius(28.dp).padding(18.dp)) {
@@ -86,10 +81,10 @@ class TasksWidget : GlanceAppWidget() {
     }
   }
 
-  @Composable private fun ExpandedContent(context: Context, filter: WidgetFilter, tasks: List<WidgetTask>, error: String) {
+  @Composable private fun ExpandedContent(context: Context, filter: WidgetListFilter, tasks: List<WidgetTask>, error: String) {
     Column(modifier = GlanceModifier.fillMaxSize()) {
       Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.Vertical.CenterVertically) {
-        Text("${filter.label} ▾", style = TextStyle(color = WidgetPalette.text, fontWeight = FontWeight.Bold), modifier = GlanceModifier.clickable(actionRunCallback<CycleFilterAction>()))
+        Text("${filter.label} ▾", style = TextStyle(color = WidgetPalette.text, fontWeight = FontWeight.Bold), modifier = GlanceModifier.clickable(actionRunCallback<OpenListPickerAction>()))
         Spacer(modifier = GlanceModifier.defaultWeight())
         AddButton(context)
       }
@@ -98,7 +93,13 @@ class TasksWidget : GlanceAppWidget() {
         Text(error, style = TextStyle(color = WidgetPalette.mutedText), modifier = GlanceModifier.clickable(actionRunCallback<OpenLoginAction>()))
       } else if (tasks.isEmpty()) {
         Text("No tasks here", style = TextStyle(color = WidgetPalette.mutedText))
-      } else tasks.forEach { task -> TaskRow(context, task) }
+      } else {
+        // LazyColumn is rendered as a native RemoteViews collection: the launcher
+        // owns the scroll position while this list is independently scrollable.
+        LazyColumn(modifier = GlanceModifier.fillMaxWidth().defaultWeight()) {
+          items(tasks, itemId = { it.id.hashCode().toLong() }) { task -> TaskRow(context, task) }
+        }
+      }
     }
   }
 
@@ -113,14 +114,6 @@ class TasksWidget : GlanceAppWidget() {
       Text(if (task.completed) "●" else "○", style = TextStyle(color = if (task.completed) WidgetPalette.completed else WidgetPalette.text, fontSize = 24.sp), modifier = GlanceModifier.width(34.dp).clickable(actionRunCallback<ToggleTaskAction>(actionParametersOf(TaskIdKey to task.id))))
       Text(task.title, maxLines = 1, style = TextStyle(color = if (task.completed) WidgetPalette.completed else WidgetPalette.text), modifier = GlanceModifier.defaultWeight().clickable(actionRunCallback<OpenTaskAction>(actionParametersOf(TaskIdKey to task.id))))
     }
-  }
-
-  private fun matches(task: WidgetTask, filter: WidgetFilter): Boolean = when (filter) {
-    WidgetFilter.ALL -> true
-    WidgetFilter.STARRED -> task.starred
-    WidgetFilter.TODAY -> task.dueDate.startsWith(java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date()))
-    WidgetFilter.COLLEGE -> task.area == "College"
-    WidgetFilter.PERSONAL -> task.area == "Personal"
   }
 }
 
@@ -154,11 +147,12 @@ class OpenLoginAction : ActionCallback {
   }
 }
 
-class CycleFilterAction : ActionCallback {
+class OpenListPickerAction : ActionCallback {
   override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-    updateAppWidgetState(context, glanceId) { preferences ->
-      preferences[FilterKey] = WidgetFilter.from(preferences[FilterKey]).next().value
-    }
-    TasksWidget().update(context, glanceId)
+    val appWidgetId = (glanceId as? AppWidgetId)?.appWidgetId ?: return
+    context.startActivity(Intent(context, WidgetListPickerActivity::class.java).apply {
+      putExtra(WidgetListPickerActivity.EXTRA_APP_WIDGET_ID, appWidgetId)
+      addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY)
+    })
   }
 }

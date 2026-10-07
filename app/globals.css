@@ -1338,6 +1338,8 @@ input:focus, textarea:focus, select:focus { border-color: #ff554c !important; bo
 }
 .app-modal-sm { max-width: 420px; }
 .app-modal-lg { max-width: 760px; }
+.app-modal-lg:has(.task-editor-form) { max-width: 820px; }
+.task-editor-form { display: grid; gap: 0; }
 .app-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .app-modal-header h2 { font-size: 18px; font-weight: 700; letter-spacing: -.02em; }
 .app-modal-close { width: 30px; height: 30px; border-radius: 8px; color: var(--text-secondary); background: transparent; font-size: 20px; line-height: 1; }
