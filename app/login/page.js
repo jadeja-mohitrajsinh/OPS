@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import Logo from '@/components/Logo';
 import { NativeGoogleSignIn } from '@/lib/native-google-sign-in';
+import { refreshTasksWidget } from '@/lib/tasks-widget';
 
 export default function LoginPage() {
   const [error, setError] = useState('');
@@ -31,6 +32,11 @@ export default function LoginPage() {
       });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'Google Sign-In could not be completed.');
+      // Persist the HttpOnly session cookie before replacing the WebView URL.
+      // Without this flush, Android can drop a just-issued session on process
+      // death and the widget cannot authenticate after a restart.
+      await NativeGoogleSignIn.persistWebSession();
+      await refreshTasksWidget();
       window.location.assign('/tasks');
     } catch (nativeError) {
       setError(nativeError?.message || 'Google Sign-In was cancelled or could not be completed.');

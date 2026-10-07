@@ -1,0 +1,61 @@
+package me.mohitrajsinh.ops.widget
+
+import android.content.Context
+import android.webkit.CookieManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+
+object WidgetTaskRepository {
+  private const val ORIGIN = "https://ops.mohitrajsinh.me"
+
+  suspend fun sync(context: Context): Boolean = withContext(Dispatchers.IO) {
+    try {
+      flushPendingCompletions(context)
+      val response = request("GET", "/api/tasks")
+      if (!response.optBoolean("success")) error("Task sync failed")
+      val tasks = response.optJSONArray("data") ?: JSONArray()
+      val cache = JSONArray()
+      for (index in 0 until tasks.length()) {
+        val task = tasks.getJSONObject(index)
+        cache.put(JSONObject().apply {
+          put("id", task.optString("_id")); put("title", task.optString("name"))
+          put("completed", task.optString("status") in listOf("DONE", "CANCELLED"))
+          put("dueDate", task.optString("deadline")); put("area", task.optString("area"))
+        })
+      }
+      WidgetTaskCache.save(context, cache.toString())
+      true
+    } catch (error: Exception) { WidgetTaskCache.error(context, error.message ?: "Unable to sync tasks"); false }
+  }
+
+  suspend fun complete(context: Context, taskId: String): Boolean = withContext(Dispatchers.IO) {
+    WidgetTaskCache.markCompleted(context, taskId)
+    try { flushPendingCompletions(context); sync(context) }
+    catch (error: Exception) { WidgetTaskCache.error(context, error.message ?: "Unable to update task"); false }
+  }
+
+  private fun flushPendingCompletions(context: Context) {
+    WidgetTaskCache.pendingCompletions(context).forEach { taskId ->
+      request("PUT", "/api/tasks/$taskId", JSONObject().put("status", "DONE").toString())
+      WidgetTaskCache.removePendingCompletion(context, taskId)
+    }
+  }
+
+  private fun request(method: String, path: String, body: String? = null): JSONObject {
+    val cookie = CookieManager.getInstance().getCookie(ORIGIN)
+      ?: error("Sign in to OPS to view your tasks")
+    val connection = (URL(ORIGIN + path).openConnection() as HttpURLConnection).apply {
+      requestMethod = method; connectTimeout = 15_000; readTimeout = 15_000
+      setRequestProperty("Accept", "application/json"); setRequestProperty("Cookie", cookie)
+      if (body != null) { doOutput = true; setRequestProperty("Content-Type", "application/json"); outputStream.use { it.write(body.toByteArray()) } }
+    }
+    val status = connection.responseCode
+    val response = (if (status in 200..299) connection.inputStream else connection.errorStream)?.bufferedReader()?.use { it.readText() }.orEmpty()
+    if (status !in 200..299) error(if (status == 401) "Sign in to OPS to view your tasks" else "OPS sync failed ($status)")
+    return JSONObject(response)
+  }
+}

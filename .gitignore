@@ -74,6 +74,7 @@ Desktop.ini
 # Cache
 .cache
 .gradle-build/
+android/.kotlin/
 .parcel-cache
 .eslintcache
 .stylelintcache

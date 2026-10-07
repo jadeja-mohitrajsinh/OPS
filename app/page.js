@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import Link from 'next/link';
+import { refreshTasksWidget } from '@/lib/tasks-widget';
 
 const PRIORITY_LABELS = { P0: { text: 'P0', cls: 'badge-p0' }, P1: { text: 'P1', cls: 'badge-p1' }, P2: { text: 'P2', cls: 'badge-p2' }, P3: { text: 'P3', cls: 'badge-p3' } };
 
@@ -131,6 +132,7 @@ export default function HomePage() {
 
   async function handleComplete(id) {
     await fetch(`/api/tasks/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'DONE' }) });
+    await refreshTasksWidget();
     loadDashboard();
   }
 

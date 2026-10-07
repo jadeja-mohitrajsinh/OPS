@@ -4,6 +4,7 @@ import AppShell from '@/components/AppShell';
 import Link from 'next/link';
 import ReminderCenter from '@/components/ReminderCenter';
 import { checkNotificationPermission, syncAllTodayReminders } from '@/lib/notifications';
+import { refreshTasksWidget } from '@/lib/tasks-widget';
 
 // ─── Constants & Color Schemes ───────────────────────────────────────────────
 const HOURS = Array.from({ length: 19 }, (_, i) => {
@@ -186,6 +187,7 @@ export default function TodayExecutionPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
+      await refreshTasksWidget();
     } catch (e) {
       console.error(e);
     }

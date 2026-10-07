@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import AppShell from '@/components/AppShell';
+import { clearTasksWidget } from '@/lib/tasks-widget';
 
 function AccountAvatar({ name }) {
   const initials = (name || 'O').split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
@@ -53,7 +54,7 @@ export default function AccountPage() {
             </div>
           </section>
 
-          <div style={{ display: 'flex', gap: 14, alignItems: 'center', justifyContent: 'space-between', padding: '18px 4px 0', flexWrap: 'wrap' }}><p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Your account is managed through Google OAuth.</p><button className="btn btn-ghost btn-sm" onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); window.location.assign('/login'); }}>Sign out</button></div>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'center', justifyContent: 'space-between', padding: '18px 4px 0', flexWrap: 'wrap' }}><p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Your account is managed through Google OAuth.</p><button className="btn btn-ghost btn-sm" onClick={async () => { await clearTasksWidget(); await fetch('/api/auth/logout', { method: 'POST' }); window.location.assign('/login'); }}>Sign out</button></div>
         </>}
       </div>
     </AppShell>

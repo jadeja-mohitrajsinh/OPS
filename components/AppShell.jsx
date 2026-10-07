@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import ReminderCenter from '@/components/ReminderCenter';
 import Logo from '@/components/Logo';
+import { clearTasksWidget } from '@/lib/tasks-widget';
 
 // ── Icons ───────────────────────────────────────────────────────────
 function Icon({ name, size = 20 }) {
@@ -415,6 +416,7 @@ export default function AppShell({ children, overdueBadge = 0 }) {
           </button>
           <button
             onClick={async () => {
+              await clearTasksWidget();
               await fetch('/api/auth/logout', { method: 'POST' });
               router.push('/login');
               router.refresh();

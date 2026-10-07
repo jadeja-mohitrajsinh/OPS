@@ -1,6 +1,7 @@
 package me.mohitrajsinh.ops;
 
 import android.os.CancellationSignal;
+import android.webkit.CookieManager;
 
 import androidx.credentials.Credential;
 import androidx.credentials.CredentialManager;
@@ -21,6 +22,17 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 
 @CapacitorPlugin(name = "NativeGoogleSignIn")
 public class NativeGoogleSignInPlugin extends Plugin {
+  @PluginMethod
+  public void persistWebSession(PluginCall call) {
+    // The authenticated API response writes the HttpOnly cookie to WebView's
+    // cookie jar. Flush before navigation so it survives process death and is
+    // available to the widget's authenticated background refresh.
+    CookieManager cookieManager = CookieManager.getInstance();
+    cookieManager.setAcceptCookie(true);
+    cookieManager.flush();
+    call.resolve();
+  }
+
   @PluginMethod
   public void signIn(PluginCall call) {
     String serverClientId = call.getString("serverClientId");
