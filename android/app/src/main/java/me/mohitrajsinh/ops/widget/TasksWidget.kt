@@ -33,7 +33,6 @@ import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import androidx.glance.unit.ColorProvider
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.compose.ui.graphics.Color
@@ -68,7 +67,7 @@ class TasksWidget : GlanceAppWidget() {
     val tasks = matchingTasks.take(if (compact) 1 else maxTasks)
     val error = WidgetTaskCache.error(context)
 
-    Box(modifier = GlanceModifier.fillMaxSize().background(Color(0xFF161B26)).cornerRadius(28.dp).padding(18.dp)) {
+    Box(modifier = GlanceModifier.fillMaxSize().background(WidgetPalette.surface).cornerRadius(28.dp).padding(18.dp)) {
       if (compact) CompactContent(context, tasks, error) else ExpandedContent(context, filter, tasks, error)
     }
   }
@@ -76,13 +75,13 @@ class TasksWidget : GlanceAppWidget() {
   @Composable private fun CompactContent(context: Context, tasks: List<WidgetTask>, error: String) {
     Column(modifier = GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.Vertical.CenterVertically) {
       Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.Vertical.CenterVertically) {
-        Text("Tasks", style = TextStyle(color = ColorProvider(Color(0xFFF7F4F2)), fontWeight = FontWeight.Bold))
+        Text("Tasks", style = TextStyle(color = WidgetPalette.text, fontWeight = FontWeight.Bold))
         Spacer(modifier = GlanceModifier.defaultWeight())
         AddButton(context)
       }
       Spacer(modifier = GlanceModifier.height(10.dp))
-      if (error.isNotEmpty()) Text(error, style = TextStyle(color = ColorProvider(Color(0xFFA9AFBB))))
-      else if (tasks.isEmpty()) Text("No tasks here", style = TextStyle(color = ColorProvider(Color(0xFFA9AFBB))))
+      if (error.isNotEmpty()) Text(error, style = TextStyle(color = WidgetPalette.mutedText))
+      else if (tasks.isEmpty()) Text("No tasks here", style = TextStyle(color = WidgetPalette.mutedText))
       else TaskRow(context, tasks.first())
     }
   }
@@ -90,29 +89,29 @@ class TasksWidget : GlanceAppWidget() {
   @Composable private fun ExpandedContent(context: Context, filter: WidgetFilter, tasks: List<WidgetTask>, error: String) {
     Column(modifier = GlanceModifier.fillMaxSize()) {
       Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.Vertical.CenterVertically) {
-        Text("${filter.label} ▾", style = TextStyle(color = ColorProvider(Color(0xFFF7F4F2)), fontWeight = FontWeight.Bold), modifier = GlanceModifier.clickable(actionRunCallback<CycleFilterAction>()))
+        Text("${filter.label} ▾", style = TextStyle(color = WidgetPalette.text, fontWeight = FontWeight.Bold), modifier = GlanceModifier.clickable(actionRunCallback<CycleFilterAction>()))
         Spacer(modifier = GlanceModifier.defaultWeight())
         AddButton(context)
       }
       Spacer(modifier = GlanceModifier.height(10.dp))
       if (error.isNotEmpty()) {
-        Text(error, style = TextStyle(color = ColorProvider(Color(0xFFA9AFBB))), modifier = GlanceModifier.clickable(actionRunCallback<OpenLoginAction>()))
+        Text(error, style = TextStyle(color = WidgetPalette.mutedText), modifier = GlanceModifier.clickable(actionRunCallback<OpenLoginAction>()))
       } else if (tasks.isEmpty()) {
-        Text("No tasks here", style = TextStyle(color = ColorProvider(Color(0xFFA9AFBB))))
+        Text("No tasks here", style = TextStyle(color = WidgetPalette.mutedText))
       } else tasks.forEach { task -> TaskRow(context, task) }
     }
   }
 
   @Composable private fun AddButton(context: Context) {
-    Box(modifier = GlanceModifier.background(Color(0xFF9DDBFF)).cornerRadius(16.dp).padding(horizontal = 14.dp, vertical = 8.dp).clickable(actionRunCallback<QuickAddTaskAction>()), contentAlignment = Alignment.Center) {
-      Text("+", style = TextStyle(color = ColorProvider(Color(0xFF0B1722)), fontWeight = FontWeight.Bold))
+    Box(modifier = GlanceModifier.background(WidgetPalette.accent).cornerRadius(16.dp).padding(horizontal = 14.dp, vertical = 8.dp).clickable(actionRunCallback<QuickAddTaskAction>()), contentAlignment = Alignment.Center) {
+      Text("+", style = TextStyle(color = WidgetPalette.accentText, fontWeight = FontWeight.Bold))
     }
   }
 
   @Composable private fun TaskRow(context: Context, task: WidgetTask) {
     Row(modifier = GlanceModifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.Vertical.CenterVertically) {
-      Text(if (task.completed) "●" else "○", style = TextStyle(color = ColorProvider(if (task.completed) Color(0xFF9DDBFF) else Color(0xFFE5E7EB)), fontSize = 24.sp), modifier = GlanceModifier.width(34.dp).clickable(actionRunCallback<ToggleTaskAction>(actionParametersOf(TaskIdKey to task.id))))
-      Text(task.title, maxLines = 1, style = TextStyle(color = ColorProvider(if (task.completed) Color(0xFFA9AFBB) else Color(0xFFF7F4F2))), modifier = GlanceModifier.defaultWeight().clickable(actionRunCallback<OpenTaskAction>(actionParametersOf(TaskIdKey to task.id))))
+      Text(if (task.completed) "●" else "○", style = TextStyle(color = if (task.completed) WidgetPalette.completed else WidgetPalette.text, fontSize = 24.sp), modifier = GlanceModifier.width(34.dp).clickable(actionRunCallback<ToggleTaskAction>(actionParametersOf(TaskIdKey to task.id))))
+      Text(task.title, maxLines = 1, style = TextStyle(color = if (task.completed) WidgetPalette.completed else WidgetPalette.text), modifier = GlanceModifier.defaultWeight().clickable(actionRunCallback<OpenTaskAction>(actionParametersOf(TaskIdKey to task.id))))
     }
   }
 

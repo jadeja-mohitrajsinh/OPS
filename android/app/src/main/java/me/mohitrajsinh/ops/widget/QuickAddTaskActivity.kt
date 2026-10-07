@@ -39,7 +39,7 @@ class QuickAddTaskActivity : Activity() {
     }
     fun control(text: String) = Button(this).apply {
       this.text = text; isAllCaps = false; textSize = 13f
-      setTextColor(Color.rgb(220, 227, 238)); background = darkRound(Color.rgb(34, 42, 57), 14)
+      setTextColor(Color.rgb(247, 244, 242)); background = darkRound(Color.rgb(25, 25, 25), 14)
       minHeight = 0; minimumHeight = dp(38); setPadding(dp(10), 0, dp(10), 0)
     }
 
@@ -53,7 +53,7 @@ class QuickAddTaskActivity : Activity() {
     val sheet = LinearLayout(this).apply {
       orientation = LinearLayout.VERTICAL
       setPadding(dp(20), dp(16), dp(20), dp(16))
-      background = darkRound(Color.rgb(22, 27, 38), 26)
+      background = darkRound(Color.rgb(17, 17, 17), 26)
     }
     val listLabel = TextView(this).apply {
       text = "My Tasks ▾"; textSize = 14f; setTextColor(Color.rgb(169, 175, 187))
@@ -64,20 +64,34 @@ class QuickAddTaskActivity : Activity() {
       background = ColorDrawable(Color.TRANSPARENT); setPadding(0, dp(10), 0, dp(12))
     }
     val projects = listOf("My Tasks") + WidgetTaskCache.tasks(this).map { it.projectId }.filter { it.isNotBlank() }.distinct().sorted()
+    val projectAdapter = object : ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, projects) {
+      override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        return (super.getView(position, convertView, parent) as TextView).apply {
+          setTextColor(Color.rgb(247, 244, 242)); textSize = 13f; setPadding(dp(12), 0, dp(8), 0)
+        }
+      }
+      override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
+        return (super.getDropDownView(position, convertView, parent) as TextView).apply {
+          setTextColor(Color.rgb(247, 244, 242)); setBackgroundColor(Color.rgb(25, 25, 25)); setPadding(dp(14), dp(12), dp(14), dp(12))
+        }
+      }
+    }
     val projectPicker = Spinner(this).apply {
-      adapter = ArrayAdapter(this@QuickAddTaskActivity, android.R.layout.simple_spinner_dropdown_item, projects)
+      adapter = projectAdapter
+      background = darkRound(Color.rgb(25, 25, 25), 14)
+      setPopupBackgroundDrawable(darkRound(Color.rgb(25, 25, 25), 14))
       setSelection(0)
     }
     val detailsInput = EditText(this).apply {
       hint = "Details"; setHintTextColor(Color.rgb(169, 175, 187)); setTextColor(Color.WHITE)
       textSize = 15f; minLines = 2; visibility = View.GONE
-      background = darkRound(Color.rgb(34, 42, 57), 14); setPadding(dp(12), dp(8), dp(12), dp(8))
+      background = darkRound(Color.rgb(25, 25, 25), 14); setPadding(dp(12), dp(8), dp(12), dp(8))
     }
     val detailsButton = control("☰ Details")
     val dueButton = control("◷ Due")
     val starButton = control("☆")
     val saveButton = control("Save").apply {
-      setTextColor(Color.rgb(11, 23, 34)); background = darkRound(Color.rgb(157, 219, 255), 14)
+      setTextColor(Color.WHITE); background = darkRound(Color.rgb(255, 59, 48), 14)
     }
     var starred = false
     var dueDate = ""
@@ -100,7 +114,7 @@ class QuickAddTaskActivity : Activity() {
     starButton.setOnClickListener {
       starred = !starred
       starButton.text = if (starred) "★" else "☆"
-      starButton.setTextColor(if (starred) Color.rgb(255, 210, 76) else Color.rgb(220, 227, 238))
+      starButton.setTextColor(if (starred) Color.rgb(242, 184, 75) else Color.rgb(247, 244, 242))
     }
 
     fun submit() {
