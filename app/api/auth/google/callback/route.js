@@ -29,14 +29,8 @@ export async function GET(request) {
     if (!state || state.expiresAt <= new Date()) return redirectWithError(request, 'This authorization request expired. Please try again.');
 
     const { tokens, profile } = await exchangeCode({ code, codeVerifier: state.codeVerifier });
-    const encryptedTokens = encryptJson({
-      accessToken: tokens.access_token || '',
-      refreshToken: tokens.refresh_token || '',
-      expiryDate: tokens.expiry_date || null,
-      tokenType: tokens.token_type || 'Bearer',
-    });
 
-    if (state.connectionType === 'primary_tasks') {
+    if (state.connectionType === 'primary_identity') {
       let user;
       if (state.userId) {
         // User is already logged in, update their primary connection
@@ -54,15 +48,6 @@ export async function GET(request) {
           { new: true, upsert: true, setDefaultsOnInsert: true },
         );
       }
-      const connection = await OAuthConnection.findOneAndUpdate(
-        { userId: user._id, connectionType: 'primary_tasks' },
-        { $set: { provider: 'google', googleSubject: profile.sub, email: profile.email, scopes: ['https://www.googleapis.com/auth/tasks'], encryptedTokens, status: 'active' } },
-        { new: true, upsert: true, setDefaultsOnInsert: true },
-      );
-      if (!user.primaryTaskConnectionId || String(user.primaryTaskConnectionId) !== String(connection._id)) {
-        user.primaryTaskConnectionId = connection._id;
-        await user.save();
-      }
       const response = NextResponse.redirect(new URL('/tasks', request.url));
       if (!state.userId) {
         response.cookies.set({ name: SESSION_COOKIE, value: await createSession(user), httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: SESSION_MAX_AGE_SECONDS });
@@ -71,6 +56,12 @@ export async function GET(request) {
     }
 
     if (!state.userId) return redirectWithError(request, 'Missing primary account session.');
+    const encryptedTokens = encryptJson({
+      accessToken: tokens.access_token || '',
+      refreshToken: tokens.refresh_token || '',
+      expiryDate: tokens.expiry_date || null,
+      tokenType: tokens.token_type || 'Bearer',
+    });
     const conflict = await OAuthConnection.exists({ connectionType: 'connected_gmail', googleSubject: profile.sub, userId: { $ne: state.userId }, status: { $ne: 'removed' } });
     if (conflict) return redirectWithError(request, 'That Gmail account is already connected to a different primary account.');
     await OAuthConnection.findOneAndUpdate(

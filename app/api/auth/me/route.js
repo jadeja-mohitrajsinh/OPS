@@ -11,7 +11,7 @@ export async function GET(request) {
     await dbConnect();
     const [user, connections] = await Promise.all([
       User.findById(session.userId).lean(),
-      OAuthConnection.find({ userId: session.userId, status: { $ne: 'removed' } }).select('-encryptedTokens -syncCursor').lean(),
+      OAuthConnection.find({ userId: session.userId, connectionType: 'connected_gmail', status: { $ne: 'removed' } }).select('-encryptedTokens -syncCursor').lean(),
     ]);
     if (!user) return NextResponse.json({ success: false, error: 'Session user no longer exists' }, { status: 401 });
     return NextResponse.json({ success: true, data: { user, connections } });

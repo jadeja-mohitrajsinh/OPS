@@ -13,4 +13,4 @@ OPS uses Android Credential Manager with Sign in with Google for the Capacitor A
 
 The Android plugin returns only an ID token to the OPS web layer. The token is sent over HTTPS to the backend, which uses `google-auth-library` to validate its signature, audience, issuer, and expiry before finding or creating the user and issuing the OPS session. Google passwords are never available to OPS or stored by it.
 
-The identity token grants sign-in only. Google Tasks and Gmail access remain separate, explicit browser-based consent flows because those scopes require OAuth authorization beyond native identity sign-in.
+The identity token grants sign-in only. Optional Gmail access remains a separate, explicit browser-based consent flow because that scope requires OAuth authorization beyond native identity sign-in.

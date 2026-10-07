@@ -22,7 +22,7 @@ export default function TermsPage() {
 
       <section style={sectionStyle}>
         <h2>Google integrations</h2>
-        <p>Google access is optional and requires your explicit authorization. Your primary account is used for the OPS task workspace. Each connected Gmail account requires separate consent and may be disconnected independently. Your use of Google services remains subject to Google&apos;s applicable terms and policies.</p>
+        <p>Google sign-in identifies and secures your OPS account. Each connected Gmail account requires separate consent and may be disconnected independently. Your use of Google services remains subject to Google&apos;s applicable terms and policies.</p>
       </section>
 
       <section style={sectionStyle}>

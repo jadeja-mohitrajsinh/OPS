@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Task from '@/models/Task';
 import { requireSession } from '@/lib/require-session';
+import retireLegacyTaskIndex from '@/lib/retire-legacy-task-index';
 
 export async function GET(request, { params }) {
   const { session, response } = await requireSession(request);
   if (response) return response;
   try {
     await dbConnect();
+    await retireLegacyTaskIndex(Task);
     const task = await Task.findOne({ _id: params.id, userId: session.userId, deletedAt: null });
     if (!task) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: task });
@@ -21,14 +23,13 @@ export async function PUT(request, { params }) {
   if (response) return response;
   try {
     await dbConnect();
+    await retireLegacyTaskIndex(Task);
     const body = await request.json();
     if (body.status === 'DONE' && !body.completedAt) {
       body.completedAt = new Date();
     }
     delete body.userId;
-    delete body.googleTaskId;
-    delete body.googleTaskListId;
-    const task = await Task.findOneAndUpdate({ _id: params.id, userId: session.userId, deletedAt: null }, { ...body, syncState: 'pending' }, { new: true, runValidators: true });
+    const task = await Task.findOneAndUpdate({ _id: params.id, userId: session.userId, deletedAt: null }, body, { new: true, runValidators: true });
     if (!task) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: task });
   } catch (error) {
@@ -41,9 +42,10 @@ export async function DELETE(request, { params }) {
   if (response) return response;
   try {
     await dbConnect();
+    await retireLegacyTaskIndex(Task);
     const task = await Task.findOneAndUpdate(
       { _id: params.id, userId: session.userId, deletedAt: null },
-      { $set: { deletedAt: new Date(), syncState: 'pending_delete' } },
+      { $set: { deletedAt: new Date() } },
       { new: true },
     );
     if (!task) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });

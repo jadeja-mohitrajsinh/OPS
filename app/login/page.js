@@ -108,7 +108,7 @@ export default function LoginPage() {
           </button>
         ) : (
           <a
-            href="/api/auth/google/start?connectionType=primary_tasks"
+            href="/api/auth/google/start?connectionType=primary_identity"
             className="btn btn-primary"
             style={{ padding: '12px', fontSize: 14, fontWeight: 700, justifyContent: 'center', textDecoration: 'none' }}
           >
@@ -117,7 +117,7 @@ export default function LoginPage() {
         )}
 
         <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-          Your Google identity signs you in. Google Tasks and additional Gmail inboxes require separate consent when you choose to connect them.
+          Your Google identity signs you in. Additional Gmail inboxes require separate consent when you choose to connect them.
         </div>
       </div>
     </div>

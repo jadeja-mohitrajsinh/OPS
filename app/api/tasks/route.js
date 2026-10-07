@@ -3,12 +3,14 @@ import dbConnect from '@/lib/mongodb';
 import Task from '@/models/Task';
 import { sortByPriority } from '@/lib/priority';
 import { requireSession } from '@/lib/require-session';
+import retireLegacyTaskIndex from '@/lib/retire-legacy-task-index';
 
 export async function GET(request) {
   const { session, response } = await requireSession(request);
   if (response) return response;
   try {
     await dbConnect();
+    await retireLegacyTaskIndex(Task);
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const area = searchParams.get('area');
@@ -38,9 +40,10 @@ export async function POST(request) {
   if (response) return response;
   try {
     await dbConnect();
+    await retireLegacyTaskIndex(Task);
     const body = await request.json();
     delete body.userId;
-    const task = await Task.create({ ...body, userId: session.userId, syncState: 'pending' });
+    const task = await Task.create({ ...body, userId: session.userId });
     return NextResponse.json({ success: true, data: task }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 400 });

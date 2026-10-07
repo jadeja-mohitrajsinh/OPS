@@ -13,22 +13,21 @@ export default function PrivacyPage() {
       <Link href="/login" style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: 14 }}>← Back to OPS</Link>
       <h1 style={{ fontSize: 36, margin: '24px 0 8px' }}>Privacy Policy</h1>
       <p style={{ color: 'var(--text-secondary)' }}>Effective date: October 4, 2026 · Applies to OPS at ops.mohitrajsinh.me</p>
-      <p>OPS is a personal task-management service operated through <strong>ops.mohitrajsinh.me</strong>. This policy explains how OPS collects, uses, stores, shares, and deletes information when you sign in with Google, manage Google Tasks, or connect a Gmail inbox.</p>
+      <p>OPS is a personal task-management service operated through <strong>ops.mohitrajsinh.me</strong>. This policy explains how OPS collects, uses, stores, shares, and deletes information when you sign in with Google or connect a Gmail inbox.</p>
 
       <section style={sectionStyle}>
         <h2>Information OPS processes</h2>
         <ul>
           <li><strong>Primary account identity (`openid`, `email`, and `profile`):</strong> your Google account subject identifier, email address, and profile name used to create and secure your OPS account.</li>
-          <li><strong>Google Tasks data (`https://www.googleapis.com/auth/tasks`):</strong> task lists and task fields that you choose to manage through OPS, including task titles, notes, status, and due dates.</li>
           <li><strong>Connected Gmail metadata (`https://www.googleapis.com/auth/gmail.metadata`):</strong> only when you explicitly add an inbox, message and thread identifiers, sender display value, subject, snippet, labels, received time, and importance/unread state. OPS does not request, store, or use Gmail attachments or full message bodies by default.</li>
-          <li><strong>App data:</strong> preferences, task-to-email links, sync state, notification history, and security/audit events needed to operate the service.</li>
+          <li><strong>App data:</strong> tasks, preferences, task-to-email links, notification history, and security/audit events needed to operate the service.</li>
           <li><strong>Credentials:</strong> OAuth access and refresh tokens are stored encrypted and are used only to provide the Google integrations you authorize.</li>
         </ul>
       </section>
 
       <section style={sectionStyle}>
         <h2>How OPS uses Google user data</h2>
-        <p>OPS uses Google user data solely to provide visible user-facing features: signing you in, synchronizing the primary account&apos;s Google Tasks, showing approved connected-inbox metadata, and converting an email you select into a task. A connected Gmail account is separately authorized and is never used as a substitute for the primary account&apos;s Google Tasks permission.</p>
+        <p>OPS uses Google user data solely to provide visible user-facing features: signing you in, showing approved connected-inbox metadata, and converting an email you select into a task. A connected Gmail account is separately authorized and can be disconnected independently.</p>
         <p>OPS does not sell Google user data, use it for advertising, build advertising profiles, determine creditworthiness, or train general or non-personalized AI/ML models. OPS does not allow people to read Google user data except when you choose to view it in OPS, when required to investigate a security incident or support issue with your approval, or when required by law.</p>
       </section>
 
@@ -39,7 +38,7 @@ export default function PrivacyPage() {
 
       <section style={sectionStyle}>
         <h2>Security and retention</h2>
-        <p>OPS uses HTTPS in transit, encrypted OAuth credentials at rest, signed application sessions, account-scoped data access, and least-privilege OAuth scopes. OAuth credentials are retained only while their connection remains active. Account and task data are retained while you use OPS or until you request deletion, subject to legitimate security and legal obligations. You can disconnect a Gmail account at any time; its authorization and stored inbox metadata are deleted. Tasks already created in your primary Google Tasks account remain there unless you delete them.</p>
+        <p>OPS uses HTTPS in transit, encrypted OAuth credentials at rest, signed application sessions, account-scoped data access, and least-privilege OAuth scopes. OAuth credentials are retained only while their connection remains active. Account and task data are retained while you use OPS or until you request deletion, subject to legitimate security and legal obligations. You can disconnect a Gmail account at any time; its authorization and stored inbox metadata are deleted.</p>
       </section>
 
       <section style={sectionStyle}>

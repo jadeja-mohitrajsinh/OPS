@@ -11,13 +11,13 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const connectionType = searchParams.get('connectionType');
-    if (!['primary_tasks', 'connected_gmail'].includes(connectionType)) {
-      return NextResponse.json({ success: false, error: 'connectionType must be primary_tasks or connected_gmail.' }, { status: 400 });
+    if (!['primary_identity', 'connected_gmail'].includes(connectionType)) {
+      return NextResponse.json({ success: false, error: 'connectionType must be primary_identity or connected_gmail.' }, { status: 400 });
     }
 
     const { session, response } = await requireSession(request);
     if (connectionType === 'connected_gmail' && response) return response;
-    // Allow connecting primary_tasks even when logged in - it will update the existing user's connection
+    // A signed-in user may refresh the Google identity linked to their profile.
 
     const { verifier, challenge } = createPkcePair();
     const state = randomUUID();

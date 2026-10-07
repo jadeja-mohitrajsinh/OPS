@@ -8,7 +8,7 @@ export async function GET(request) {
   if (response) return response;
   try {
     await dbConnect();
-    const connections = await OAuthConnection.find({ userId: session.userId, status: { $ne: 'removed' } })
+    const connections = await OAuthConnection.find({ userId: session.userId, connectionType: 'connected_gmail', status: { $ne: 'removed' } })
       .select('-encryptedTokens -syncCursor')
       .sort({ connectionType: 1, email: 1 })
       .lean();
