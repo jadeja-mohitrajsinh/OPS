@@ -31,6 +31,8 @@ function TaskForm({ onSave, onClose, initial = {} }) {
   });
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -40,16 +42,24 @@ function TaskForm({ onSave, onClose, initial = {} }) {
       tags: Array.isArray(form.tags) ? form.tags : (form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [])
     };
     if (!payload.deadline) delete payload.deadline;
-    await onSave(payload);
-    onClose();
+    setSaving(true);
+    setSaveError('');
+    try {
+      await onSave(payload);
+      onClose();
+    } catch (error) {
+      setSaveError(error.message || 'Task could not be saved. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
+      <div className="modal task-editor-modal" role="dialog" aria-modal="true" aria-label={initial._id ? 'Edit task' : 'New task'}>
         <div className="modal-header">
           <h2 className="modal-title">{initial._id ? 'Edit Task' : 'New Task'}</h2>
-          <button className="modal-close btn" onClick={onClose}>✕</button>
+          <button className="modal-close btn" type="button" onClick={onClose} disabled={saving}>✕</button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -117,9 +127,10 @@ function TaskForm({ onSave, onClose, initial = {} }) {
             <label className="label">Tags (comma separated)</label>
             <input className="input" value={form.tags} onChange={e => set('tags', e.target.value)} placeholder="gate, exam, urgent" />
           </div>
+          {saveError && <p role="alert" style={{ color: 'var(--red)', fontSize: 13, margin: '16px 0 0' }}>{saveError}</p>}
           <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary">Save Task</button>
+            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save Task'}</button>
           </div>
         </form>
       </div>
@@ -131,11 +142,11 @@ function TaskRow({ task, onToggle, onEdit, onDelete }) {
   const dl = daysLeft(task.deadline);
   const isDone = task.status === 'DONE';
   return (
-    <div className={`card ${isDone ? '' : 'card-hover'}`} style={{ padding: '12px 16px', opacity: isDone ? 0.55 : 1 }}>
+    <div className={`card ${isDone ? '' : 'card-hover'}`} role="button" tabIndex={0} onClick={() => onEdit(task)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onEdit(task); } }} style={{ padding: '12px 16px', opacity: isDone ? 0.55 : 1, cursor: 'pointer' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
         {/* Checkbox */}
         <button
-          onClick={() => onToggle(task._id, task.status)}
+          onClick={event => { event.stopPropagation(); onToggle(task._id, task.status); }}
           style={{
             width: 22, height: 22, borderRadius: 6,
             border: isDone ? 'none' : '1.5px solid var(--border)',
@@ -162,10 +173,10 @@ function TaskRow({ task, onToggle, onEdit, onDelete }) {
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-          <button onClick={() => onEdit(task)} className="btn btn-ghost btn-sm btn-icon" title="Edit" style={{ width: 28, height: 28 }}>
+          <button onClick={event => { event.stopPropagation(); onEdit(task); }} className="btn btn-ghost btn-sm btn-icon" title="Edit" style={{ width: 28, height: 28 }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
-          <button onClick={() => onDelete(task)} className="btn btn-ghost btn-sm btn-icon" title="Delete" style={{ width: 28, height: 28, color: 'var(--text-muted)' }}>
+          <button onClick={event => { event.stopPropagation(); onDelete(task); }} className="btn btn-ghost btn-sm btn-icon" title="Delete" style={{ width: 28, height: 28, color: 'var(--text-muted)' }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
           </button>
         </div>
@@ -339,14 +350,16 @@ export default function TasksPage() {
       }
       const res = await fetch(`/api/tasks/${editing._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Task could not be updated.');
       savedTask = data.data;
     } else {
       const res = await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Task could not be created.');
       savedTask = data.data;
     }
     setEditing(null);
-    load();
+    await load();
     
     // Schedule notifications for new task with deadline
     if (savedTask && savedTask.deadline) {

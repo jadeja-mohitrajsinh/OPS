@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import GateSubject from '@/models/GateSubject';
 import CollegeSubject from '@/models/CollegeSubject';
+import { requireSession } from '@/lib/require-session';
 
 // Official GATE 2027 IIT Madras - DA (Data Science & AI) Syllabus
 const GATE_DA_2027_SECTIONS = [
@@ -140,6 +141,8 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const { session, response } = await requireSession(request);
+  if (response) return response;
   try {
     await dbConnect();
     const url = new URL(request ? request.url : 'http://localhost:3000/api/seed');
@@ -156,7 +159,7 @@ export async function POST(request) {
     }
 
     const gateCount = await GateSubject.countDocuments();
-    const collegeCount = await CollegeSubject.countDocuments();
+    const collegeCount = await CollegeSubject.countDocuments({ userId: session.userId });
 
     let gateSeeded = 0;
     let collegeSeeded = 0;
@@ -167,7 +170,7 @@ export async function POST(request) {
     }
 
     if (collegeCount === 0) {
-      await CollegeSubject.insertMany(COLLEGE_SUBJECTS);
+      await CollegeSubject.insertMany(COLLEGE_SUBJECTS.map(subject => ({ ...subject, userId: session.userId })));
       collegeSeeded = COLLEGE_SUBJECTS.length;
     }
 
