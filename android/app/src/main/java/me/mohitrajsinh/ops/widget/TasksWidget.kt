@@ -134,7 +134,11 @@ class ToggleTaskAction : ActionCallback {
 
 class QuickAddTaskAction : ActionCallback {
   override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-    context.startActivity(Intent(context, QuickAddTaskActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    context.startActivity(
+      Intent(context, QuickAddTaskActivity::class.java).addFlags(
+        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY,
+      ),
+    )
   }
 }
 

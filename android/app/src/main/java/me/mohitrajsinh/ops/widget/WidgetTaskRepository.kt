@@ -40,9 +40,13 @@ object WidgetTaskRepository {
     WidgetSyncWork.enqueueNow(context)
   }
 
-  suspend fun create(context: Context, title: String): Boolean = withContext(Dispatchers.IO) {
+  suspend fun create(context: Context, title: String, project: String = "", notes: String = "", dueDate: String = "", starred: Boolean = false): Boolean = withContext(Dispatchers.IO) {
     try {
-      request("POST", "/api/tasks", JSONObject().put("name", title).toString())
+      val payload = JSONObject().put("name", title).put("starred", starred)
+      if (project.isNotBlank()) payload.put("project", project)
+      if (notes.isNotBlank()) payload.put("notes", notes)
+      if (dueDate.isNotBlank()) payload.put("deadline", dueDate)
+      request("POST", "/api/tasks", payload.toString())
       sync(context)
     } catch (error: Exception) {
       WidgetTaskCache.error(context, error.message ?: "Unable to add task")
