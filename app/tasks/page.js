@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import AppModal from '@/components/AppModal';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { syncTasksWidget } from '@/lib/tasks-widget';
 
 const AREAS = ['', 'Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'Forge', 'Learning', 'Health', 'Communication'];
 const PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
@@ -138,7 +137,7 @@ function TaskForm({ onSave, onClose, initial = {} }) {
   );
 }
 
-function TaskRow({ task, onToggle, onEdit, onDelete }) {
+function TaskRow({ task, onToggle, onToggleStar, onEdit, onDelete }) {
   const dl = daysLeft(task.deadline);
   const isDone = task.status === 'DONE';
   return (
@@ -173,6 +172,9 @@ function TaskRow({ task, onToggle, onEdit, onDelete }) {
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+          <button onClick={event => { event.stopPropagation(); onToggleStar(task); }} className="btn btn-ghost btn-sm btn-icon" title={task.starred ? 'Remove star' : 'Star task'} style={{ width: 28, height: 28, color: task.starred ? 'var(--yellow)' : 'var(--text-muted)' }}>
+            {task.starred ? '★' : '☆'}
+          </button>
           <button onClick={event => { event.stopPropagation(); onEdit(task); }} className="btn btn-ghost btn-sm btn-icon" title="Edit" style={{ width: 28, height: 28 }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
@@ -207,7 +209,6 @@ export default function TasksPage() {
     const res = await fetch(url);
     const data = await res.json();
     let list = data.success ? data.data : [];
-    if (data.success) syncTasksWidget(data.data || []);
     if (filterStatus === 'active') list = list.filter(t => !['DONE', 'CANCELLED'].includes(t.status));
     else if (filterStatus === 'done') list = list.filter(t => t.status === 'DONE');
     setTasks(list);
@@ -373,6 +374,13 @@ export default function TasksPage() {
     load();
   }
 
+  async function handleToggleStar(task) {
+    const res = await fetch(`/api/tasks/${task._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ starred: !task.starred }) });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || 'Task could not be updated.');
+    await load();
+  }
+
   async function handleDelete() {
     if (!taskPendingDelete) return;
     setDeletingTask(true);
@@ -454,14 +462,14 @@ export default function TasksPage() {
         </div>
       ) : filterPriority ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {tasks.map(t => <TaskRow key={t._id} task={t} onToggle={handleToggle} onEdit={t => { setEditing(t); setShowForm(true); }} onDelete={task => { setDeleteError(''); setTaskPendingDelete(task); }} />)}
+          {tasks.map(t => <TaskRow key={t._id} task={t} onToggle={handleToggle} onToggleStar={handleToggleStar} onEdit={t => { setEditing(t); setShowForm(true); }} onDelete={task => { setDeleteError(''); setTaskPendingDelete(task); }} />)}
         </div>
       ) : (
         Object.entries(groupedByPriority).map(([p, group]) => (
           <div key={p} style={{ marginBottom: 24 }}>
             <div className="section-label" style={{ marginBottom: 8 }}>{PRIORITY_NAMES[p]} <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>({group.length})</span></div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {group.map(t => <TaskRow key={t._id} task={t} onToggle={handleToggle} onEdit={t => { setEditing(t); setShowForm(true); }} onDelete={task => { setDeleteError(''); setTaskPendingDelete(task); }} />)}
+              {group.map(t => <TaskRow key={t._id} task={t} onToggle={handleToggle} onToggleStar={handleToggleStar} onEdit={t => { setEditing(t); setShowForm(true); }} onDelete={task => { setDeleteError(''); setTaskPendingDelete(task); }} />)}
             </div>
           </div>
         ))

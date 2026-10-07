@@ -44,7 +44,7 @@ private val FilterKey = stringPreferencesKey("task_filter")
 private val TaskIdKey = ActionParameters.Key<String>("task_id")
 
 enum class WidgetFilter(val value: String, val label: String) {
-  ALL("all", "All Tasks"), TODAY("today", "Today"), COLLEGE("college", "College"), PERSONAL("personal", "Personal");
+  ALL("all", "All Tasks"), STARRED("starred", "Starred"), TODAY("today", "Today"), COLLEGE("college", "College"), PERSONAL("personal", "Personal");
   fun next() = entries[(ordinal + 1) % entries.size]
   companion object { fun from(value: String?) = entries.firstOrNull { it.value == value } ?: ALL }
 }
@@ -115,6 +115,7 @@ class TasksWidget : GlanceAppWidget() {
 
   private fun matches(task: WidgetTask, filter: WidgetFilter): Boolean = when (filter) {
     WidgetFilter.ALL -> true
+    WidgetFilter.STARRED -> task.starred
     WidgetFilter.TODAY -> task.dueDate.startsWith(java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date()))
     WidgetFilter.COLLEGE -> task.area == "College"
     WidgetFilter.PERSONAL -> task.area == "Personal"
@@ -124,7 +125,7 @@ class TasksWidget : GlanceAppWidget() {
 class CompleteTaskAction : ActionCallback {
   override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
     parameters[TaskIdKey]?.let { WidgetTaskRepository.complete(context, it) }
-    TasksWidget().update(context, glanceId)
+    WidgetUpdates.refreshAll(context)
   }
 }
 

@@ -25,6 +25,8 @@ object WidgetTaskRepository {
           put("id", task.optString("_id")); put("title", task.optString("name"))
           put("completed", task.optString("status") in listOf("DONE", "CANCELLED"))
           put("dueDate", task.optString("deadline")); put("area", task.optString("area"))
+          put("starred", task.optBoolean("starred")); put("projectId", task.optString("project"))
+          put("updatedAt", task.optString("updatedAt"))
         })
       }
       WidgetTaskCache.save(context, cache.toString())
@@ -32,16 +34,15 @@ object WidgetTaskRepository {
     } catch (error: Exception) { WidgetTaskCache.error(context, error.message ?: "Unable to sync tasks"); false }
   }
 
-  suspend fun complete(context: Context, taskId: String): Boolean = withContext(Dispatchers.IO) {
-    WidgetTaskCache.markCompleted(context, taskId)
-    try { flushPendingCompletions(context); sync(context) }
-    catch (error: Exception) { WidgetTaskCache.error(context, error.message ?: "Unable to update task"); false }
+  fun complete(context: Context, taskId: String) {
+    WidgetTaskCache.setCompleted(context, taskId, true)
+    WidgetSyncWork.enqueueNow(context)
   }
 
   private fun flushPendingCompletions(context: Context) {
-    WidgetTaskCache.pendingCompletions(context).forEach { taskId ->
-      request("PUT", "/api/tasks/$taskId", JSONObject().put("status", "DONE").toString())
-      WidgetTaskCache.removePendingCompletion(context, taskId)
+    WidgetTaskCache.pendingMutations(context).forEach { mutation ->
+      request("PUT", "/api/tasks/${mutation.taskId}", JSONObject().put("status", mutation.status).toString())
+      WidgetTaskCache.removePendingMutation(context, mutation.taskId)
     }
   }
 

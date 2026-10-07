@@ -1,4 +1,5 @@
 import './globals.css';
+import WidgetSyncLifecycle from '@/components/WidgetSyncLifecycle';
 
 export const metadata = {
   title: 'OPS — Personal Operating System',
@@ -29,6 +30,7 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body>
+        <WidgetSyncLifecycle />
         {children}
       </body>
     </html>

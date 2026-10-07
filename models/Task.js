@@ -6,6 +6,7 @@ const TaskSchema = new mongoose.Schema({
   project: { type: String, default: '' },
   area: { type: String, enum: ['Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'Forge', 'Learning', 'Health', 'Communication', ''], default: '' },
   priority: { type: String, enum: ['P0', 'P1', 'P2', 'P3'], default: 'P1' },
+  starred: { type: Boolean, default: false },
   deadline: { type: Date },
   estimatedDuration: { type: Number, default: 30 }, // minutes
   energyLevel: { type: String, enum: ['LOW', 'MEDIUM', 'HIGH'], default: 'MEDIUM' },
