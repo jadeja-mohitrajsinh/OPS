@@ -34,9 +34,20 @@ object WidgetTaskRepository {
     } catch (error: Exception) { WidgetTaskCache.error(context, error.message ?: "Unable to sync tasks"); false }
   }
 
-  fun complete(context: Context, taskId: String) {
-    WidgetTaskCache.setCompleted(context, taskId, true)
+  fun toggle(context: Context, taskId: String) {
+    val task = WidgetTaskCache.tasks(context).firstOrNull { it.id == taskId } ?: return
+    WidgetTaskCache.setCompleted(context, taskId, !task.completed)
     WidgetSyncWork.enqueueNow(context)
+  }
+
+  suspend fun create(context: Context, title: String): Boolean = withContext(Dispatchers.IO) {
+    try {
+      request("POST", "/api/tasks", JSONObject().put("name", title).toString())
+      sync(context)
+    } catch (error: Exception) {
+      WidgetTaskCache.error(context, error.message ?: "Unable to add task")
+      false
+    }
   }
 
   private fun flushPendingCompletions(context: Context) {

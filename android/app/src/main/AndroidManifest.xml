@@ -50,6 +50,8 @@
             <intent-filter><action android:name="android.intent.action.BOOT_COMPLETED" /></intent-filter>
         </receiver>
 
+        <activity android:name=".widget.QuickAddTaskActivity" android:theme="@style/AppTheme.WidgetQuickAdd" android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
