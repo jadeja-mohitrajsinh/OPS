@@ -5,6 +5,11 @@ import { useEffect, useRef } from 'react';
 export default function AppModal({ open, onClose, title, size = 'md', children, footer, closeOnBackdrop = true }) {
   const dialogRef = useRef(null);
   const previouslyFocusedRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -18,7 +23,7 @@ export default function AppModal({ open, onClose, title, size = 'md', children, 
     (autofocusTarget || dialogRef.current)?.focus();
 
     const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') onCloseRef.current();
       if (event.key !== 'Tab' || !dialogRef.current) return;
       const focusable = dialogRef.current.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]');
       if (!focusable.length) return;
@@ -33,7 +38,7 @@ export default function AppModal({ open, onClose, title, size = 'md', children, 
       document.removeEventListener('keydown', onKeyDown);
       previouslyFocusedRef.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
   return (
