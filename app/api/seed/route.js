@@ -4,7 +4,7 @@ import GateSubject from '@/models/GateSubject';
 import CollegeSubject from '@/models/CollegeSubject';
 import { requireSession } from '@/lib/require-session';
 
-// Official GATE 2027 IIT Madras - DA (Data Science & AI) Syllabus
+// GATE 2027 DA study plan: official DA syllabus plus General Aptitude.
 const GATE_DA_2027_SECTIONS = [
   {
     name: 'Section 1: Probability and Statistics',
@@ -111,6 +111,17 @@ const GATE_DA_2027_SECTIONS = [
       { name: 'Approximate Inference through Sampling' },
     ],
   },
+  {
+    name: 'General Aptitude',
+    priority: 8,
+    topics: [
+      { name: 'Percentages, Ratios, Averages and Basic Arithmetic' },
+      { name: 'Logical and Quantitative Reasoning' },
+      { name: 'Spatial Aptitude' },
+      { name: 'English Grammar and Reading Comprehension' },
+      { name: 'Verbal Reasoning and Timed GA PYQs' },
+    ],
+  },
 ];
 
 const COLLEGE_SUBJECTS = [
@@ -153,7 +164,7 @@ export async function POST(request) {
       await GateSubject.insertMany(GATE_DA_2027_SECTIONS);
       return NextResponse.json({
         success: true,
-        message: 'Force synced official GATE 2027 DA syllabus (7 Sections, all topics).',
+        message: 'Synced GATE 2027 DA study plan (7 DA sections plus General Aptitude).',
         sectionsCount: GATE_DA_2027_SECTIONS.length,
       });
     }
@@ -176,7 +187,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: `Seeded ${gateSeeded} GATE DA 2027 subjects and ${collegeSeeded} college subjects.`,
+      message: `Seeded ${gateSeeded} GATE DA 2027 study-plan subjects and ${collegeSeeded} college subjects.`,
       alreadySeeded: gateCount > 0 || collegeCount > 0,
       totalGateSubjects: gateCount > 0 ? gateCount : gateSeeded,
     });

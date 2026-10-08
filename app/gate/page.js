@@ -13,8 +13,27 @@ const STAGE_COLORS = {
   MASTERED: 'var(--green)',
 };
 
-const GATE_DATE = new Date('2027-02-01');
+const GATE_DATE = new Date('2027-02-06');
 const daysToGate = Math.max(0, Math.ceil((GATE_DATE - new Date()) / 86400000));
+
+const STUDY_PLAN = [
+  ['12–18 Oct', 'Probability I', '70 questions • 15 PYQs'],
+  ['19–25 Oct', 'Probability II', '80 questions • 15 PYQs'],
+  ['26 Oct – 1 Nov', 'Statistics and Inference', '80 questions • 20 PYQs • sectional test'],
+  ['2–8 Nov', 'Linear Algebra I', 'Concepts and practice'],
+  ['9–15 Nov', 'Linear Algebra II', 'Concepts and practice'],
+  ['16–22 Nov', 'Calculus and Optimization', 'Concepts and practice'],
+  ['23–29 Nov', 'Python and Data Structures', 'Concepts and practice'],
+  ['30 Nov – 6 Dec', 'Algorithms and Graphs', 'Concepts and practice'],
+  ['7–13 Dec', 'DBMS and Warehousing', 'Concepts and practice'],
+  ['14–20 Dec', 'Machine Learning I', 'Concepts and practice'],
+  ['21–27 Dec', 'Machine Learning II', 'Concepts and practice'],
+  ['28 Dec – 3 Jan', 'Artificial Intelligence', 'Concepts and practice'],
+  ['4–10 Jan', 'Revision I: Mathematics', 'Revision and weak-topic repair'],
+  ['11–17 Jan', 'Revision II: Computing', 'Revision and timed practice'],
+  ['18–24 Jan', 'Revision III: AI and ML', 'Revision and full mocks'],
+  ['25–31 Jan', 'Final Exam Simulation', 'Full mocks and analysis'],
+];
 
 function TopicRow({ topic, onUpdateStage, onToggleWeak }) {
   return (
@@ -229,7 +248,7 @@ export default function GatePage() {
   }, []);
 
   async function handleSyncSyllabus() {
-    if (!confirm('Sync full official IIT Madras GATE 2027 DA syllabus (7 Sections & micro-topics)?')) return;
+    if (subjects.length > 0 && !confirm('Replace the current GATE data with the GATE 2027 DA study plan, including General Aptitude?')) return;
     setSyncing(true);
     try {
       await fetch('/api/seed?force=true', { method: 'POST' });
@@ -263,7 +282,7 @@ export default function GatePage() {
             </span>
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-            Official 7-Section curriculum tracker, PYQ counter & mastery pipeline
+            16-week DA study plan, General Aptitude, PYQ counter & mastery pipeline
           </p>
         </div>
 
@@ -272,7 +291,7 @@ export default function GatePage() {
           onClick={handleSyncSyllabus}
           disabled={syncing}
         >
-          {syncing ? 'Syncing Syllabus...' : '🔄 Sync IIT Madras Syllabus'}
+          {syncing ? 'Loading Study Plan...' : '🔄 Load GATE Study Plan'}
         </button>
       </div>
 
@@ -281,7 +300,7 @@ export default function GatePage() {
         <div className="card" style={{ padding: '12px 14px', borderLeft: '3px solid var(--orange)' }}>
           <div style={{ fontSize: 11, color: 'var(--orange)', textTransform: 'uppercase', fontWeight: 800 }}>Days to Exam</div>
           <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--orange)', marginTop: 4 }}>{daysToGate}d</div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>February 2027</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>6 February 2027</div>
         </div>
 
         <div className="card" style={{ padding: '12px 14px', borderLeft: '3px solid var(--green)' }}>
@@ -303,23 +322,42 @@ export default function GatePage() {
         </div>
       </div>
 
-      {/* 7 Sections Overview */}
+      <div className="card" style={{ marginBottom: 20, padding: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>16-week preparation schedule</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>32 focused hours/week · 70–100 practice questions/week · 15–25 PYQs/week</div>
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--purple)', background: 'var(--purple-bg)', borderRadius: 10, padding: '5px 8px', alignSelf: 'flex-start' }}>General Aptitude: 2–3h/week</div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 8 }}>
+          {STUDY_PLAN.map(([dates, focus, target], index) => (
+            <div key={focus} style={{ padding: '9px 10px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--surface-2)' }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--purple)' }}>WEEK {index + 1} · {dates}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', marginTop: 3 }}>{focus}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>{target}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* GATE DA section overview */}
       {loading ? (
         <div className="loading-state"><div className="spinner" /></div>
       ) : subjects.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-title">No GATE subjects found</div>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
-            Click below to load the complete 7-Section IIT Madras syllabus.
+            Load the 16-week DA study plan, including all 7 DA sections and General Aptitude.
           </p>
           <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={handleSyncSyllabus}>
-            Load IIT Madras DA Syllabus
+            Load GATE 2027 Study Plan
           </button>
         </div>
       ) : (
         <div>
           <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 }}>
-            Official IIT Madras 7 Sections
+            GATE DA sections and General Aptitude
           </div>
           {subjects.map(subject => (
             <SubjectCard
