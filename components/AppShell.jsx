@@ -369,50 +369,31 @@ export default function AppShell({ children, overdueBadge = 0 }) {
           ))}
         </div>
 
-        {/* Desktop Add Button */}
-        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
+        {/* Desktop Quick Add Button */}
+        <div style={{ padding: '10px 12px', borderTop: '1px solid var(--border-subtle)' }}>
           <button
             onClick={() => setMenuOpen(o => !o)}
-            style={{
-              width: '100%',
-              background: 'var(--purple)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 10,
-              padding: '12px',
-              fontSize: 14,
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            className="sidebar-quick-add-btn"
+            aria-label="Quick Add"
           >
-            <Icon name="plus" size={18} />
+            <Icon name="plus" size={15} />
             Quick Add
           </button>
         </div>
-        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', fontSize: 11, color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="sidebar-bottom-actions">
           <button
             onClick={() => setShowReminders(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--purple)',
-              cursor: 'pointer',
-              fontSize: 11,
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-            }}
+            className="sidebar-bottom-btn alerts"
             title="Open Reminder Center"
           >
-            <Icon name="bell" size={14} /> Alerts
+            <Icon name="bell" size={13} /> Alerts
+          </button>
+          <button
+            onClick={toggleTheme}
+            className="sidebar-bottom-btn"
+            title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+          >
+            <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={13} />
           </button>
           <button
             onClick={async () => {
@@ -421,19 +402,10 @@ export default function AppShell({ children, overdueBadge = 0 }) {
               router.push('/login');
               router.refresh();
             }}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-              fontSize: 11,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-            }}
+            className="sidebar-bottom-btn"
             title="Lock / Logout"
           >
-            🔒 Lock
+            🔒
           </button>
         </div>
       </nav>

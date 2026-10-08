@@ -370,7 +370,7 @@ export default function TodayExecutionPage() {
       <div className="today-desktop">
         <div style={{ maxWidth: '100%', margin: '0 auto', padding: '0 0 80px 0', position: 'relative' }} className="today-main-content">
         
-        {/* ── STICKY COMMAND HEADER ───────────────────────────────────────────── */}
+        {/* ── STICKY COMMAND HEADER ───────────────────────────────────────── */}
         <div className="today-command-header" style={{
           position: 'sticky',
           top: 0,
@@ -379,38 +379,36 @@ export default function TodayExecutionPage() {
           WebkitBackdropFilter: 'blur(16px)',
           background: 'var(--surface)',
           borderBottom: '1px solid var(--border)',
-          margin: '0 0 16px 0',
-          padding: '12px 16px',
+          margin: '0 0 12px 0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 16,
-          borderRadius: 12,
+          gap: 12,
         }}>
           <div>
-            <div className="today-date-row" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="today-date-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{
-                fontSize: 11,
-                fontWeight: 900,
-                letterSpacing: '1px',
-                color: 'var(--purple)',
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: '1.2px',
+                color: 'var(--accent)',
                 textTransform: 'uppercase',
-                background: 'var(--purple-bg)',
-                padding: '5px 10px',
-                borderRadius: 6,
+                background: 'var(--accent-bg)',
+                padding: '3px 7px',
+                borderRadius: 4,
               }}>TODAY</span>
-              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400 }}>
                 {displayDate}
               </span>
             </div>
 
-            <div className="today-time-row" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+            <div className="today-time-row" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
               <div style={{
-                fontSize: 20,
-                fontWeight: 800,
+                fontSize: 22,
+                fontWeight: 700,
                 color: 'var(--text)',
                 fontVariantNumeric: 'tabular-nums',
-                letterSpacing: '-0.3px',
+                letterSpacing: '-0.04em',
               }}>
                 {displayTime}
               </div>
@@ -418,49 +416,50 @@ export default function TodayExecutionPage() {
                 <div style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 7,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: currentActiveItem.color || 'var(--purple)',
+                  gap: 5,
+                  fontSize: 11,
+                  fontWeight: 500,
+                  color: currentActiveItem.color || 'var(--text-secondary)',
                   background: 'var(--surface-2)',
-                  padding: '4px 10px',
-                  borderRadius: 18,
-                  border: `1px solid ${currentActiveItem.color || 'var(--border)'}25`,
-                  maxWidth: 260,
+                  padding: '3px 8px',
+                  borderRadius: 4,
+                  border: '1px solid var(--border)',
+                  maxWidth: 200,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: currentActiveItem.color || 'var(--purple)', animation: 'pulse 2s infinite' }} />
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: currentActiveItem.color || 'var(--accent)', flexShrink: 0 }} />
                   {currentActiveItem.title}
                 </div>
               ) : (
-                <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>• Standby</span>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>Standby</span>
               )}
             </div>
           </div>
 
           {/* Quick Header Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <button
               onClick={scrollToNow}
               title="Jump to NOW"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 5,
-                background: 'rgba(239, 68, 68, 0.08)',
-                color: '#ef4444',
-                border: '1px solid rgba(239, 68, 68, 0.2)',
-                borderRadius: 7,
-                padding: '6px 10px',
-                fontSize: 11,
+                gap: 4,
+                background: 'var(--accent-bg)',
+                color: 'var(--accent)',
+                border: '1px solid rgba(255,59,48,0.2)',
+                borderRadius: 6,
+                padding: '5px 9px',
+                fontSize: 10,
                 fontWeight: 700,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
+                letterSpacing: '0.5px',
               }}
             >
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#ef4444' }} />
+              <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--accent)' }} />
               NOW
             </button>
 
@@ -470,14 +469,14 @@ export default function TodayExecutionPage() {
               style={{
                 background: 'var(--surface-2)',
                 border: '1px solid var(--border)',
-                color: 'var(--text)',
-                borderRadius: 7,
-                width: 36,
-                height: 36,
+                color: 'var(--text-secondary)',
+                borderRadius: 6,
+                width: 32,
+                height: 32,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 14,
+                fontSize: 13,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
               }}
@@ -491,14 +490,14 @@ export default function TodayExecutionPage() {
               style={{
                 background: 'var(--surface-2)',
                 border: '1px solid var(--border)',
-                color: 'var(--text)',
-                borderRadius: 7,
-                width: 36,
-                height: 36,
+                color: 'var(--text-secondary)',
+                borderRadius: 6,
+                width: 32,
+                height: 32,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 14,
+                fontSize: 13,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
               }}
@@ -509,21 +508,21 @@ export default function TodayExecutionPage() {
             <button
               onClick={() => openScheduleAtHour(currentTimeStr)}
               style={{
-                background: 'var(--purple)',
+                background: 'var(--accent)',
                 color: '#fff',
                 border: 'none',
-                borderRadius: 7,
-                padding: '6px 12px',
+                borderRadius: 6,
+                padding: '5px 10px',
                 fontSize: 11,
-                fontWeight: 800,
+                fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 5,
+                gap: 4,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
               }}
             >
-              ＋ Add
+            + Schedule
             </button>
           </div>
         </div>
@@ -588,31 +587,30 @@ export default function TodayExecutionPage() {
           }}
           className="timeline-container"
         >
-          {/* Timeline Header Info */}
+          {/* Timeline Header */}
           <div style={{
-            padding: '8px 12px',
-            borderBottom: '1px solid var(--border)',
+            padding: '7px 12px',
+            borderBottom: '1px solid var(--border-subtle)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             background: 'var(--surface-2)',
           }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)' }}>
-              📅 Daily Execution Timeline
+            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+              Daily Timeline
             </div>
-            <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 500 }}>
-              Tap hour to schedule • Drag to move
+            <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 400 }}>
+              Tap to schedule • Drag to move
             </div>
           </div>
 
           {/* Timeline Vertical Slots */}
-          <div style={{ position: 'relative', padding: '2px 0' }}>
+          <div style={{ position: 'relative' }}>
             {HOURS.map((hourStr) => {
               const hourNum = parseInt(hourStr.split(':')[0], 10);
               const isCurrentHour = currentH === hourNum;
               const isDragOver = dragOverHour === hourStr;
 
-              // Items falling strictly within this hour
               const hourItems = timelineItems.filter(item => {
                 const [ih] = item.time.split(':').map(Number);
                 return ih === hourNum;
@@ -621,193 +619,98 @@ export default function TodayExecutionPage() {
               return (
                 <div
                   key={hourStr}
+                  className={`timeline-slot${isCurrentHour ? ' is-current' : ''}${isDragOver ? ' is-drag-over' : ''}`}
                   onDragOver={(e) => handleDragOver(e, hourStr)}
                   onDrop={(e) => handleDropOnHour(e, hourStr)}
-                  style={{
-                    position: 'relative',
-                    minHeight: 52,
-                    display: 'flex',
-                    borderBottom: '1px solid var(--border-subtle)',
-                    background: isDragOver
-                      ? 'rgba(99,102,241,0.06)'
-                      : isCurrentHour
-                      ? 'rgba(99,102,241,0.015)'
-                      : 'transparent',
-                    transition: 'background 0.15s ease',
-                  }}
                 >
                   {/* Left: Hour Label */}
                   <div className="timeline-hour-label" style={{
-                    width: 72,
+                    width: 60,
                     flexShrink: 0,
-                    padding: '10px 12px 0 0',
+                    padding: '10px 8px 0 8px',
                     textAlign: 'right',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: isCurrentHour ? 'var(--purple)' : 'var(--text-muted)',
+                    fontSize: 10,
+                    fontWeight: isCurrentHour ? 700 : 500,
+                    color: isCurrentHour ? 'var(--accent)' : 'var(--text-muted)',
                     fontVariantNumeric: 'tabular-nums',
                     borderRight: '1px solid var(--border-subtle)',
                     userSelect: 'none',
-                    lineHeight: '1.4',
+                    lineHeight: '1.3',
                   }}>
                     {fmt12(hourStr)}
                   </div>
 
-                  {/* Right: Slot Contents & Drop/Tap Area */}
+                  {/* Right: Slot contents */}
                   <div
                     onClick={(e) => {
-                      if (e.target === e.currentTarget) {
-                        openScheduleAtHour(hourStr);
-                      }
+                      if (e.target === e.currentTarget) openScheduleAtHour(hourStr);
                     }}
                     style={{
                       flex: 1,
                       position: 'relative',
-                      padding: '8px 12px',
+                      padding: '6px 8px',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: 6,
+                      gap: 4,
                       cursor: 'pointer',
-                      minHeight: 52,
+                      minHeight: 44,
                     }}
                   >
-                    {/* Render LIVE NOW indicator line inside current hour */}
+                    {/* NOW line */}
                     {isCurrentHour && (
                       <div
                         ref={nowMarkerRef}
-                        style={{
-                          position: 'absolute',
-                          left: 0,
-                          right: 0,
-                          top: `${(currentM / 60) * 100}%`,
-                          zIndex: 15,
-                          pointerEvents: 'none',
-                          display: 'flex',
-                          alignItems: 'center',
-                        }}
+                        className="now-line"
+                        style={{ top: `${(currentM / 60) * 100}%` }}
                       >
-                        <div style={{
-                          position: 'absolute',
-                          left: -2,
-                          width: 5,
-                          height: 5,
-                          borderRadius: '50%',
-                          background: '#ef4444',
-                          boxShadow: '0 0 2px rgba(239, 68, 68, 0.25)',
-                          border: '1.5px solid #fff',
-                        }} />
-                        <div style={{
-                          flex: 1,
-                          height: 1,
-                          background: 'rgba(239, 68, 68, 0.35)',
-                        }} />
-                        <span style={{
-                          background: 'rgba(239, 68, 68, 0.08)',
-                          color: '#ef4444',
-                          fontSize: 7,
-                          fontWeight: 700,
-                          padding: '1px 4px',
-                          borderRadius: 3,
-                          marginLeft: 4,
-                          letterSpacing: '0.2px',
-                        }}>
-                          NOW
-                        </span>
+                        <div className="now-dot" />
+                        <div className="now-rule" />
+                        <span className="now-label">NOW</span>
                       </div>
                     )}
 
-                    {/* Scheduled Items in this hour */}
+                    {/* Scheduled items */}
                     {hourItems.map(item => {
                       const typeCfg = TYPE_CONFIG[item.type] || TYPE_CONFIG.task;
-                      const isTraining = item.type === 'health';
                       return (
                         <div
                           key={item.id}
-                          className="timeline-item-card"
+                          className={`timeline-item-card tl-card${item.completed ? ' completed' : ''}`}
                           draggable
                           onDragStart={(e) => handleDragStart(e, item.id)}
                           style={{
-                            background: item.completed ? 'var(--surface-2)' : isTraining ? 'linear-gradient(100deg, rgba(255, 77, 67, 0.14), var(--surface))' : 'var(--surface)',
-                            border: `1px solid ${item.completed ? 'var(--border-subtle)' : (item.color || typeCfg.border)}${isTraining ? '70' : '35'}`,
-                            borderLeftWidth: 3,
-                            borderRadius: 8,
-                            padding: isTraining ? '10px 12px' : '8px 10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: 8,
-                            boxShadow: item.completed ? 'none' : '0 1px 3px rgba(0,0,0,0.03)',
-                            opacity: item.completed ? 0.6 : 1,
-                            cursor: 'grab',
-                            transition: 'all 0.15s ease',
+                            borderLeftColor: item.completed ? 'var(--border)' : (item.color || typeCfg.border),
+                            opacity: item.completed ? 0.55 : 1,
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
-                            {isTraining && (
-                              <span style={{ width: 26, height: 26, display: 'grid', placeItems: 'center', borderRadius: 8, background: 'rgba(255, 77, 67, 0.18)', color: '#ff6b63', fontSize: 14, flexShrink: 0 }}>
-                                💪
-                              </span>
-                            )}
-                            {/* Checkbox */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleToggleTimelineItem(item.id);
-                              }}
-                              style={{
-                                width: 16,
-                                height: 16,
-                                borderRadius: 4,
-                                border: `1.5px solid ${item.completed ? 'var(--green)' : 'var(--border)'}`,
-                                background: item.completed ? 'var(--green)' : 'transparent',
-                                color: '#fff',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 10,
-                                fontWeight: 900,
-                                cursor: 'pointer',
-                                flexShrink: 0,
-                                transition: 'all 0.15s',
-                              }}
-                            >
-                              {item.completed ? '✓' : ''}
-                            </button>
+                          {/* Checkbox */}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleToggleTimelineItem(item.id); }}
+                            className={`tl-card-check${item.completed ? ' done' : ''}`}
+                            title="Toggle complete"
+                          >
+                            {item.completed ? '✓' : ''}
+                          </button>
 
-                            {/* Title & metadata */}
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div style={{
-                                fontSize: isTraining ? 12 : 11,
-                                fontWeight: isTraining ? 800 : 600,
-                                color: item.completed ? 'var(--text-muted)' : 'var(--text)',
-                                textDecoration: item.completed ? 'line-through' : 'none',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}>
-                                {item.title}
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1, fontSize: 9, color: 'var(--text-muted)', fontWeight: 500 }}>
-                                {isTraining && <span style={{ color: '#ff6b63', fontWeight: 800, letterSpacing: '0.04em' }}>WORKOUT</span>}
-                                <span>{fmt12(item.time)}</span>
-                                {item.duration && <span>• {item.duration}m</span>}
-                                {item.notes && <span>• {item.notes}</span>}
-                              </div>
+                          {/* Title & metadata */}
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div className={`tl-card-title${item.completed ? ' completed' : ''}`}
+                              style={{ color: item.completed ? 'var(--text-muted)' : 'var(--text)' }}
+                            >
+                              {item.title}
+                            </div>
+                            <div className="tl-card-meta">
+                              <span>{fmt12(item.time)}</span>
+                              {item.duration && <span> • {item.duration}m</span>}
                             </div>
                           </div>
 
-                          {/* Tag & Action Buttons */}
+                          {/* Type tag + actions */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                            <span style={{
-                              fontSize: 8,
-                              fontWeight: 700,
-                              textTransform: 'uppercase',
-                              padding: '2px 5px',
-                              borderRadius: 3,
-                              background: typeCfg.bg,
-                              color: item.color || typeCfg.color,
-                              letterSpacing: '0.2px',
-                            }}>
+                            <span
+                              className="tl-card-tag"
+                              style={{ background: typeCfg.bg, color: item.color || typeCfg.color }}
+                            >
                               {typeCfg.label}
                             </span>
 
@@ -832,10 +735,7 @@ export default function TodayExecutionPage() {
                             )}
 
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteTimelineItem(item.id);
-                              }}
+                              onClick={(e) => { e.stopPropagation(); handleDeleteTimelineItem(item.id); }}
                               title="Remove from timeline"
                               style={{
                                 background: 'transparent',
@@ -843,9 +743,10 @@ export default function TodayExecutionPage() {
                                 color: 'var(--text-muted)',
                                 fontSize: 11,
                                 cursor: 'pointer',
-                                padding: '1px 2px',
+                                padding: '1px 3px',
                                 borderRadius: 3,
-                                opacity: 0.6,
+                                opacity: 0.5,
+                                lineHeight: 1,
                               }}
                             >
                               ✕
@@ -855,7 +756,7 @@ export default function TodayExecutionPage() {
                       );
                     })}
 
-                    {/* Interactive empty placeholder */}
+                    {/* Tap-to-schedule hint */}
                     {hourItems.length === 0 && (
                       <div
                         role="button"
@@ -868,22 +769,9 @@ export default function TodayExecutionPage() {
                             openScheduleAtHour(hourStr);
                           }
                         }}
-                        style={{
-                          height: '100%',
-                          minHeight: 36,
-                          display: 'flex',
-                          alignItems: 'center',
-                          color: 'var(--text-muted)',
-                          fontSize: 10,
-                          fontWeight: 500,
-                          opacity: 0.5,
-                          borderRadius: 6,
-                          padding: '0 8px',
-                          border: '1px dashed transparent',
-                          transition: 'all 0.15s ease',
-                        }}
+                        className="tl-tap-hint"
                       >
-                        + Tap to schedule at {fmt12(hourStr)}
+                        + {fmt12(hourStr)}
                       </div>
                     )}
                   </div>
@@ -897,32 +785,27 @@ export default function TodayExecutionPage() {
 
         {/* ── DESKTOP SCHEDULING RAIL ───────────────────────────────────────── */}
         <aside className="schedule-sidebar-desktop" aria-label="Drag items into the schedule">
-          {/* Header */}
+          {/* Schedule Panel Header */}
           <div className="schedule-rail-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div>
-              <div className="schedule-rail-title" style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>
-                Schedule at {fmt12(selectedHourForAdd)}
+              <div className="schedule-rail-title">
+                {fmt12(selectedHourForAdd)}
               </div>
-              <div className="schedule-rail-subtitle" style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, marginTop: 3 }}>
-                Select task, topic, or create custom item
+              <div className="schedule-rail-subtitle">
+                Drag or click to schedule
               </div>
             </div>
             <div
               className="schedule-rail-drag-hint"
               style={{
-                minWidth: 68,
                 display: 'grid',
                 placeItems: 'center',
-                borderRadius: 9,
-                border: '1px solid var(--border)',
-                background: 'var(--surface-2)',
-                color: 'var(--red)',
-                fontSize: 10,
-                fontWeight: 800,
                 flexShrink: 0,
+                fontWeight: 700,
+                letterSpacing: '0.05em',
               }}
             >
-              DRAG →
+              DRAG
             </div>
           </div>
 
