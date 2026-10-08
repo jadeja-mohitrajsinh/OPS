@@ -1345,13 +1345,68 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent) !importa
 .schedule-sidebar-desktop .schedule-drawer-filters::-webkit-scrollbar, .schedule-sidebar-desktop .schedule-drawer-time-chips::-webkit-scrollbar { display: none; }
 
 /* Task list in panel */
-.schedule-sidebar-desktop .schedule-drawer-results { min-height: 0; overflow-y: auto !important; overflow-x: hidden !important; gap: 6px !important; padding: 1px 2px 2px 0 !important; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
-.schedule-sidebar-desktop .schedule-drawer-results > div { min-height: 0; padding: 9px 12px !important; border-radius: 8px !important; gap: 10px !important; }
-.schedule-sidebar-desktop .schedule-drawer-results > div > div:first-child { min-width: 0; flex: 1; }
-.schedule-sidebar-desktop .schedule-drawer-results > div > div:first-child > div:first-child { font-size: 12px !important; font-weight: 600 !important; }
-.schedule-sidebar-desktop .schedule-drawer-results > div > div:first-child > div:nth-child(2) { font-size: 11px !important; color: var(--text-muted) !important; margin-top: 1px !important; }
-.schedule-sidebar-desktop .schedule-drawer-results > div > button { flex-shrink: 0; height: 26px; padding: 0 10px !important; border-radius: 5px !important; background: var(--surface-2) !important; color: var(--text-secondary) !important; border: 1px solid var(--border) !important; font-size: 11px !important; font-weight: 600 !important; }
-.schedule-sidebar-desktop .schedule-drawer-results > div > button:hover { background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; }
+.schedule-sidebar-desktop .schedule-drawer-results {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  gap: 8px !important;
+  padding: 2px 4px 16px 0 !important;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.schedule-sidebar-desktop .schedule-drawer-results > div {
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 52px !important;
+  padding: 10px 12px !important;
+  border-radius: 8px !important;
+  gap: 10px !important;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  box-sizing: border-box !important;
+}
+.schedule-sidebar-desktop .schedule-drawer-results > div > div:first-child {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+}
+.schedule-sidebar-desktop .schedule-drawer-results > div > div:first-child > div:first-child {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  color: var(--text) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.schedule-sidebar-desktop .schedule-drawer-results > div > div:first-child > div:nth-child(2) {
+  font-size: 11px !important;
+  color: var(--text-muted) !important;
+  line-height: 1.25 !important;
+  margin-top: 3px !important;
+}
+.schedule-sidebar-desktop .schedule-drawer-results > div > button {
+  flex-shrink: 0 !important;
+  height: 28px !important;
+  padding: 0 10px !important;
+  border-radius: 6px !important;
+  background: var(--surface) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.schedule-sidebar-desktop .schedule-drawer-results > div > button:hover {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+}
 
 /* Empty state */
 .schedule-empty-state { min-height: 120px !important; display: flex !important; flex-direction: column; align-items: center !important; justify-content: center !important; gap: 4px !important; color: var(--text-muted); text-align: center; border-style: dashed !important; border-radius: 8px !important; }

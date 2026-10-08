@@ -884,21 +884,25 @@ export default function TodayExecutionPage() {
               <div
                 draggable
                 onDragStart={(e) => handleSidebarDragStart(e, { title: drawerSearch, type: 'task', duration: 60 })}
+                className="schedule-drawer-item"
                 style={{
-                  padding: '8px 10px',
-                  borderRadius: 6,
+                  padding: '9px 12px',
+                  borderRadius: 8,
                   background: 'var(--purple-bg)',
                   border: '1px solid var(--purple)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: 10,
                   cursor: 'grab',
+                  flexShrink: 0,
+                  boxSizing: 'border-box',
                 }}>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--purple)' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--purple)', lineHeight: 1.35 }}>
                     Add "{drawerSearch}"
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500 }}>Custom session</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2, lineHeight: 1.25 }}>Custom session</div>
                 </div>
                 <button
                   onClick={() => handleAddItemToHour({ title: drawerSearch, type: 'task', duration: 60 }, selectedHourForAdd)}
@@ -906,11 +910,12 @@ export default function TodayExecutionPage() {
                     background: 'var(--purple)',
                     color: '#fff',
                     border: 'none',
-                    borderRadius: 5,
-                    padding: '5px 8px',
-                    fontSize: 10,
-                    fontWeight: 700,
+                    borderRadius: 6,
+                    padding: '4px 10px',
+                    fontSize: 11,
+                    fontWeight: 600,
                     cursor: 'pointer',
+                    flexShrink: 0,
                   }}
                 >
                   ＋ Add
@@ -924,36 +929,39 @@ export default function TodayExecutionPage() {
                 key={task._id}
                 draggable
                 onDragStart={(e) => handleSidebarDragStart(e, { ...task, title: getScheduleTitle(task), type: 'task' })}
+                className="schedule-drawer-item"
                 style={{
-                  padding: '8px 10px',
-                  borderRadius: 6,
+                  padding: '9px 12px',
+                  borderRadius: 8,
                   background: 'var(--surface-2)',
                   border: '1px solid var(--border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: 8,
+                  gap: 10,
                   cursor: 'grab',
+                  flexShrink: 0,
+                  boxSizing: 'border-box',
                 }}
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.35 }}>
                     <span title={getScheduleTitle(task)}>{getScheduleTitle(task)}</span>
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2, lineHeight: 1.25 }}>
                     {getScheduleMetadata(task, 'General')}
                   </div>
                 </div>
                 <button
                   onClick={() => handleAddItemToHour({ ...task, title: getScheduleTitle(task), type: 'task' }, selectedHourForAdd)}
                   style={{
-                    background: 'var(--purple)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 5,
-                    padding: '5px 8px',
-                    fontSize: 10,
-                    fontWeight: 700,
+                    background: 'var(--surface)',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 6,
+                    padding: '4px 10px',
+                    fontSize: 11,
+                    fontWeight: 600,
                     cursor: 'pointer',
                     flexShrink: 0,
                   }}
@@ -969,20 +977,43 @@ export default function TodayExecutionPage() {
                 key={meeting._id}
                 draggable
                 onDragStart={(e) => handleSidebarDragStart(e, { ...meeting, title: meeting.title, type: 'meeting', duration: meeting.duration || 60, color: '#ff5a52' })}
+                className="schedule-drawer-item"
                 style={{
-                  padding: '8px 10px', borderRadius: 6, background: 'var(--surface-2)', border: '1px solid var(--border)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'grab',
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                  cursor: 'grab',
+                  flexShrink: 0,
+                  boxSizing: 'border-box',
                 }}
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.35 }}>
                     <span title={meeting.title}>Event: {meeting.title}</span>
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2, lineHeight: 1.25 }}>
                     {meeting.time || meeting.startTime || 'Today'} • {meeting.people?.length || 0} attendees
                   </div>
                 </div>
-                <button onClick={() => handleAddItemToHour({ ...meeting, title: meeting.title, type: 'meeting', duration: meeting.duration || 60, color: '#ff5a52' }, selectedHourForAdd)} style={{ background: 'var(--red)', color: '#fff', border: 'none', borderRadius: 5, padding: '5px 8px', fontSize: 10, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+                <button
+                  onClick={() => handleAddItemToHour({ ...meeting, title: meeting.title, type: 'meeting', duration: meeting.duration || 60, color: '#ff5a52' }, selectedHourForAdd)}
+                  style={{
+                    background: 'var(--surface)',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 6,
+                    padding: '4px 10px',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                >
                   ＋ Add
                 </button>
               </div>
@@ -994,39 +1025,42 @@ export default function TodayExecutionPage() {
                 key={g._id || g.name}
                 draggable
                 onDragStart={(e) => handleSidebarDragStart(e, { title: getScheduleTitle(g), type: 'gate', duration: 90, color: '#3b82f6' })}
+                className="schedule-drawer-item"
                 style={{
-                  padding: '8px 10px',
-                  borderRadius: 6,
+                  padding: '9px 12px',
+                  borderRadius: 8,
                   background: 'var(--surface-2)',
                   border: '1px solid var(--border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: 8,
+                  gap: 10,
                   cursor: 'grab',
+                  flexShrink: 0,
+                  boxSizing: 'border-box',
                 }}
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.35 }}>
                     <span title={getScheduleTitle(g)}>{getScheduleTitle(g)}</span>
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2, lineHeight: 1.25 }}>
                     {getScheduleMetadata(g, 'GATE')}
                   </div>
                 </div>
                 <button
                   onClick={() => handleAddItemToHour({ title: getScheduleTitle(g), type: 'gate', duration: 90, color: '#3b82f6' }, selectedHourForAdd)}
                   style={{
-                    background: '#3b82f6',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 5,
-                    padding: '5px 8px',
-                    fontSize: 10,
-                    fontWeight: 700,
+                    background: 'var(--surface)',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 6,
+                    padding: '4px 10px',
+                    fontSize: 11,
+                    fontWeight: 600,
                     cursor: 'pointer',
                     flexShrink: 0,
-                    }}
+                  }}
                 >
                   ＋ Add
                 </button>
@@ -1039,36 +1073,39 @@ export default function TodayExecutionPage() {
                 key={c._id || c.name}
                 draggable
                 onDragStart={(e) => handleSidebarDragStart(e, { title: getScheduleTitle(c), type: 'college', duration: 90, color: '#f59e0b' })}
+                className="schedule-drawer-item"
                 style={{
-                  padding: '8px 10px',
-                  borderRadius: 6,
+                  padding: '9px 12px',
+                  borderRadius: 8,
                   background: 'var(--surface-2)',
                   border: '1px solid var(--border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: 8,
+                  gap: 10,
                   cursor: 'grab',
+                  flexShrink: 0,
+                  boxSizing: 'border-box',
                 }}
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.35 }}>
                     <span title={getScheduleTitle(c)}>{getScheduleTitle(c)}</span>
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2, lineHeight: 1.25 }}>
                     {getScheduleMetadata(c, 'College')}
                   </div>
                 </div>
                 <button
                   onClick={() => handleAddItemToHour({ title: getScheduleTitle(c), type: 'college', duration: 90, color: '#f59e0b' }, selectedHourForAdd)}
                   style={{
-                    background: '#f59e0b',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 5,
-                    padding: '5px 8px',
-                    fontSize: 10,
-                    fontWeight: 700,
+                    background: 'var(--surface)',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 6,
+                    padding: '4px 10px',
+                    fontSize: 11,
+                    fontWeight: 600,
                     cursor: 'pointer',
                     flexShrink: 0,
                   }}
@@ -1084,36 +1121,39 @@ export default function TodayExecutionPage() {
                 key={p._id}
                 draggable
                 onDragStart={(e) => handleSidebarDragStart(e, { title: getScheduleTitle(p), type: 'forge', duration: 120, color: '#ec4899' })}
+                className="schedule-drawer-item"
                 style={{
-                  padding: '8px 10px',
-                  borderRadius: 6,
+                  padding: '9px 12px',
+                  borderRadius: 8,
                   background: 'var(--surface-2)',
                   border: '1px solid var(--border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: 8,
+                  gap: 10,
                   cursor: 'grab',
+                  flexShrink: 0,
+                  boxSizing: 'border-box',
                 }}
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.35 }}>
                     <span title={getScheduleTitle(p)}>{getScheduleTitle(p)}</span>
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2, lineHeight: 1.25 }}>
                     {getScheduleMetadata(p, 'Forge')}
                   </div>
                 </div>
                 <button
                   onClick={() => handleAddItemToHour({ title: getScheduleTitle(p), type: 'forge', duration: 120, color: '#ec4899' }, selectedHourForAdd)}
                   style={{
-                    background: '#ec4899',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 5,
-                    padding: '5px 8px',
-                    fontSize: 10,
-                    fontWeight: 700,
+                    background: 'var(--surface)',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 6,
+                    padding: '4px 10px',
+                    fontSize: 11,
+                    fontWeight: 600,
                     cursor: 'pointer',
                     flexShrink: 0,
                   }}
@@ -1268,6 +1308,8 @@ export default function TodayExecutionPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    flexShrink: 0,
+                    boxSizing: 'border-box',
                   }}>
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--purple)' }}>
@@ -1286,6 +1328,7 @@ export default function TodayExecutionPage() {
                         fontSize: 12,
                         fontWeight: 800,
                         cursor: 'pointer',
+                        flexShrink: 0,
                       }}
                     >
                       ＋ Schedule
@@ -1306,6 +1349,8 @@ export default function TodayExecutionPage() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       gap: 10,
+                      flexShrink: 0,
+                      boxSizing: 'border-box',
                     }}
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
@@ -1348,6 +1393,8 @@ export default function TodayExecutionPage() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       gap: 10,
+                      flexShrink: 0,
+                      boxSizing: 'border-box',
                     }}
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
@@ -1390,6 +1437,8 @@ export default function TodayExecutionPage() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       gap: 10,
+                      flexShrink: 0,
+                      boxSizing: 'border-box',
                     }}
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
@@ -1432,6 +1481,8 @@ export default function TodayExecutionPage() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       gap: 10,
+                      flexShrink: 0,
+                      boxSizing: 'border-box',
                     }}
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
