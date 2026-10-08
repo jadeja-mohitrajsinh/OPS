@@ -37,6 +37,18 @@ function todayStr() {
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
 }
 
+function getScheduleTitle(record) {
+  return [record?.title, record?.name]
+    .find(value => typeof value === 'string' && value.trim())
+    ?.trim() || '';
+}
+
+function getScheduleMetadata(record, category) {
+  return [record?.priority, record?.area || record?.category || category, record?.project]
+    .filter(value => typeof value === 'string' && value.trim())
+    .join(' • ');
+}
+
 export default function TodayExecutionPage() {
   // ── State ───────────────────────────────────────────────────────────────────
   const [tasks, setTasks] = useState([]);
@@ -250,7 +262,7 @@ export default function TodayExecutionPage() {
       type: itemData.type || 'task',
       color: itemData.color || (TYPE_CONFIG[itemData.type]?.color || '#6366f1'),
       completed: itemData.status === 'DONE',
-      taskId: itemData._id || itemData.taskId || null,
+      taskId: itemData.type === 'task' ? (itemData._id || itemData.taskId || null) : null,
       notes: itemData.notes || itemData.description || '',
       link: itemData.link || null,
       attendees: itemData.attendees || null,
@@ -346,11 +358,12 @@ export default function TodayExecutionPage() {
   const nextMeeting = upcomingMeetings[0];
 
   // Drawer filtering
-  const filteredTasks = tasks.filter(t => !['DONE', 'CANCELLED'].includes(t.status) && (drawerSearch ? t.title?.toLowerCase().includes(drawerSearch.toLowerCase()) : true));
-  const filteredMeetings = meetings.filter(m => drawerSearch ? m.title?.toLowerCase().includes(drawerSearch.toLowerCase()) : true);
-  const filteredGate = gateSubjects.filter(g => drawerSearch ? g.name?.toLowerCase().includes(drawerSearch.toLowerCase()) : true);
-  const filteredCollege = collegeSubjects.filter(c => drawerSearch ? c.name?.toLowerCase().includes(drawerSearch.toLowerCase()) : true);
-  const filteredProjects = projects.filter(p => drawerSearch ? p.name?.toLowerCase().includes(drawerSearch.toLowerCase()) : true);
+  const matchesDrawerSearch = (record) => !drawerSearch || getScheduleTitle(record).toLowerCase().includes(drawerSearch.toLowerCase());
+  const filteredTasks = tasks.filter(t => !['DONE', 'CANCELLED'].includes(t.status) && getScheduleTitle(t) && matchesDrawerSearch(t));
+  const filteredMeetings = meetings.filter(m => getScheduleTitle(m) && matchesDrawerSearch(m));
+  const filteredGate = gateSubjects.filter(g => getScheduleTitle(g) && matchesDrawerSearch(g));
+  const filteredCollege = collegeSubjects.filter(c => getScheduleTitle(c) && matchesDrawerSearch(c));
+  const filteredProjects = projects.filter(p => getScheduleTitle(p) && matchesDrawerSearch(p));
 
   return (
     <AppShell>
@@ -1027,7 +1040,7 @@ export default function TodayExecutionPage() {
               <div
                 key={task._id}
                 draggable
-                onDragStart={(e) => handleSidebarDragStart(e, { ...task, type: 'task' })}
+                onDragStart={(e) => handleSidebarDragStart(e, { ...task, title: getScheduleTitle(task), type: 'task' })}
                 style={{
                   padding: '8px 10px',
                   borderRadius: 6,
@@ -1042,14 +1055,14 @@ export default function TodayExecutionPage() {
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <span title={task.title}>{task.title}</span>
+                    <span title={getScheduleTitle(task)}>{getScheduleTitle(task)}</span>
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
-                    {task.priority || 'P2'} • {task.project || 'General'}
+                    {getScheduleMetadata(task, 'General')}
                   </div>
                 </div>
                 <button
-                  onClick={() => handleAddItemToHour({ ...task, type: 'task' }, selectedHourForAdd)}
+                  onClick={() => handleAddItemToHour({ ...task, title: getScheduleTitle(task), type: 'task' }, selectedHourForAdd)}
                   style={{
                     background: 'var(--purple)',
                     color: '#fff',
@@ -1097,7 +1110,7 @@ export default function TodayExecutionPage() {
               <div
                 key={g._id || g.name}
                 draggable
-                onDragStart={(e) => handleSidebarDragStart(e, { title: g.name, type: 'gate', duration: 90, color: '#3b82f6' })}
+                onDragStart={(e) => handleSidebarDragStart(e, { title: getScheduleTitle(g), type: 'gate', duration: 90, color: '#3b82f6' })}
                 style={{
                   padding: '8px 10px',
                   borderRadius: 6,
@@ -1112,14 +1125,14 @@ export default function TodayExecutionPage() {
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <span title={g.name}>{g.name}</span>
+                    <span title={getScheduleTitle(g)}>{getScheduleTitle(g)}</span>
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
-                    {g.subject || 'GATE 2027'} • {g.progress || 0}% complete
+                    {getScheduleMetadata(g, 'GATE')}
                   </div>
                 </div>
                 <button
-                  onClick={() => handleAddItemToHour({ title: g.name, type: 'gate', duration: 90, color: '#3b82f6' }, selectedHourForAdd)}
+                  onClick={() => handleAddItemToHour({ title: getScheduleTitle(g), type: 'gate', duration: 90, color: '#3b82f6' }, selectedHourForAdd)}
                   style={{
                     background: '#3b82f6',
                     color: '#fff',
@@ -1142,7 +1155,7 @@ export default function TodayExecutionPage() {
               <div
                 key={c._id || c.name}
                 draggable
-                onDragStart={(e) => handleSidebarDragStart(e, { title: c.name, type: 'college', duration: 90, color: '#f59e0b' })}
+                onDragStart={(e) => handleSidebarDragStart(e, { title: getScheduleTitle(c), type: 'college', duration: 90, color: '#f59e0b' })}
                 style={{
                   padding: '8px 10px',
                   borderRadius: 6,
@@ -1157,14 +1170,14 @@ export default function TodayExecutionPage() {
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <span title={c.name}>{c.name}</span>
+                    <span title={getScheduleTitle(c)}>{getScheduleTitle(c)}</span>
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
-                    {c.code || 'Subject'} • {c.credits || 3} credits
+                    {getScheduleMetadata(c, 'College')}
                   </div>
                 </div>
                 <button
-                  onClick={() => handleAddItemToHour({ title: c.name, type: 'college', duration: 90, color: '#f59e0b' }, selectedHourForAdd)}
+                  onClick={() => handleAddItemToHour({ title: getScheduleTitle(c), type: 'college', duration: 90, color: '#f59e0b' }, selectedHourForAdd)}
                   style={{
                     background: '#f59e0b',
                     color: '#fff',
@@ -1187,7 +1200,7 @@ export default function TodayExecutionPage() {
               <div
                 key={p._id}
                 draggable
-                onDragStart={(e) => handleSidebarDragStart(e, { title: `Work: ${p.name}`, type: 'forge', duration: 120, color: '#ec4899' })}
+                onDragStart={(e) => handleSidebarDragStart(e, { title: getScheduleTitle(p), type: 'forge', duration: 120, color: '#ec4899' })}
                 style={{
                   padding: '8px 10px',
                   borderRadius: 6,
@@ -1202,14 +1215,14 @@ export default function TodayExecutionPage() {
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <span title={p.name}>{p.name}</span>
+                    <span title={getScheduleTitle(p)}>{getScheduleTitle(p)}</span>
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2 }}>
-                    {p.status || 'Active'} • {p.description || 'Sprint focus'}
+                    {getScheduleMetadata(p, 'Forge')}
                   </div>
                 </div>
                 <button
-                  onClick={() => handleAddItemToHour({ title: `Work: ${p.name}`, type: 'forge', duration: 120, color: '#ec4899' }, selectedHourForAdd)}
+                  onClick={() => handleAddItemToHour({ title: getScheduleTitle(p), type: 'forge', duration: 120, color: '#ec4899' }, selectedHourForAdd)}
                   style={{
                     background: '#ec4899',
                     color: '#fff',
@@ -1414,14 +1427,14 @@ export default function TodayExecutionPage() {
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <span title={task.title}>{task.title}</span>
+                        <span title={getScheduleTitle(task)}>{getScheduleTitle(task)}</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                        {task.priority || 'P2'} • {task.project || 'General'}
+                        {getScheduleMetadata(task, 'General')}
                       </div>
                     </div>
                     <button
-                      onClick={() => handleAddItemToHour({ ...task, type: 'task' }, selectedHourForAdd)}
+                      onClick={() => handleAddItemToHour({ ...task, title: getScheduleTitle(task), type: 'task' }, selectedHourForAdd)}
                       style={{
                         background: 'var(--purple)',
                         color: '#fff',
@@ -1456,14 +1469,14 @@ export default function TodayExecutionPage() {
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <span title={`GATE: ${g.name}`}>GATE: {g.name}</span>
+                        <span title={getScheduleTitle(g)}>{getScheduleTitle(g)}</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                        {g.code || 'Study Block'} • Weight: {g.weightage || 'High'}
+                        {getScheduleMetadata(g, 'GATE')}
                       </div>
                     </div>
                     <button
-                      onClick={() => handleAddItemToHour({ title: `GATE Study: ${g.name}`, type: 'gate', duration: 90, color: '#3b82f6' }, selectedHourForAdd)}
+                      onClick={() => handleAddItemToHour({ title: getScheduleTitle(g), type: 'gate', duration: 90, color: '#3b82f6' }, selectedHourForAdd)}
                       style={{
                         background: '#3b82f6',
                         color: '#fff',
@@ -1498,14 +1511,14 @@ export default function TodayExecutionPage() {
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <span title={`College: ${c.name}`}>College: {c.name}</span>
+                        <span title={getScheduleTitle(c)}>{getScheduleTitle(c)}</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                        {c.code || 'Academic'} • Attendance: {c.attendance || '--'}%
+                        {getScheduleMetadata(c, 'College')}
                       </div>
                     </div>
                     <button
-                      onClick={() => handleAddItemToHour({ title: `College: ${c.name}`, type: 'college', duration: 60, color: '#f59e0b' }, selectedHourForAdd)}
+                      onClick={() => handleAddItemToHour({ title: getScheduleTitle(c), type: 'college', duration: 60, color: '#f59e0b' }, selectedHourForAdd)}
                       style={{
                         background: '#f59e0b',
                         color: '#fff',
@@ -1540,14 +1553,14 @@ export default function TodayExecutionPage() {
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <span title={`Project: ${p.name}`}>Project: {p.name}</span>
+                        <span title={getScheduleTitle(p)}>{getScheduleTitle(p)}</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                        {p.status || 'Active'} • {p.description || 'Sprint focus'}
+                        {getScheduleMetadata(p, 'Forge')}
                       </div>
                     </div>
                     <button
-                      onClick={() => handleAddItemToHour({ title: `Work: ${p.name}`, type: 'forge', duration: 120, color: '#ec4899' }, selectedHourForAdd)}
+                      onClick={() => handleAddItemToHour({ title: getScheduleTitle(p), type: 'forge', duration: 120, color: '#ec4899' }, selectedHourForAdd)}
                       style={{
                         background: '#ec4899',
                         color: '#fff',
