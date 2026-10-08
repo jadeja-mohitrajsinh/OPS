@@ -144,7 +144,7 @@ function TaskRow({ task, onToggle, onToggleStar, onEdit, onDelete }) {
   const dl = daysLeft(task.deadline);
   const isDone = task.status === 'DONE';
   return (
-    <div className={`card ${isDone ? '' : 'card-hover'}`} role="button" tabIndex={0} onClick={() => onEdit(task)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onEdit(task); } }} style={{ padding: '12px 16px', opacity: isDone ? 0.55 : 1, cursor: 'pointer' }}>
+    <div className={`card ${isDone ? '' : 'card-hover'}`} role="button" tabIndex={0} onClick={() => onEdit(task)} onKeyDown={event => { if (event.target !== event.currentTarget) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onEdit(task); } }} style={{ padding: '12px 16px', opacity: isDone ? 0.55 : 1, cursor: 'pointer' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
         {/* Checkbox */}
         <button

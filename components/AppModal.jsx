@@ -11,7 +11,11 @@ export default function AppModal({ open, onClose, title, size = 'md', children, 
     previouslyFocusedRef.current = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    dialogRef.current?.focus();
+    // Let a form control marked with autoFocus keep focus. Focusing the dialog
+    // after React mounts it otherwise steals focus from the task editor, so
+    // keyboard input can be handled by the card that opened the modal instead.
+    const autofocusTarget = dialogRef.current?.querySelector('[autofocus]');
+    (autofocusTarget || dialogRef.current)?.focus();
 
     const onKeyDown = (event) => {
       if (event.key === 'Escape') onClose();
