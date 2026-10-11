@@ -25,6 +25,10 @@ function fmt12(time24) {
   return m ? `${displayH}:${String(m).padStart(2, '0')} ${p}` : `${displayH} ${p}`;
 }
 
+function taskDisplayName(task) {
+  return task.name?.trim() || task.title?.trim() || 'Untitled task';
+}
+
 export default function CalendarPlanningPage() {
   const now = new Date();
   const todayStr = formatDate(now.getFullYear(), now.getMonth(), now.getDate());
@@ -729,7 +733,7 @@ export default function CalendarPlanningPage() {
                       ))}
                       {workload.tasks.map(t => (
                         <span key={t._id} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: 'var(--surface-2)', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                          ✓ {t.title}
+                          ✓ {taskDisplayName(t)}
                         </span>
                       ))}
                     </div>
@@ -832,7 +836,7 @@ export default function CalendarPlanningPage() {
                     >
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {t.title}
+                          {taskDisplayName(t)}
                         </div>
                         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
                           {t.project || 'General'} • Priority: {t.priority || 'P2'}
@@ -1069,7 +1073,7 @@ export default function CalendarPlanningPage() {
                       {selectedWorkload.tasks.map(t => (
                         <div key={t._id} style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
                           <div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{t.title}</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{taskDisplayName(t)}</div>
                             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.project || 'General'} • Priority: {t.priority || 'P2'}</div>
                           </div>
                           <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>{t.status}</span>

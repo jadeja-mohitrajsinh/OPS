@@ -206,16 +206,22 @@ export default function TasksPage() {
 
   async function load() {
     setLoading(true);
-    let url = '/api/tasks?';
-    if (filterArea) url += `area=${filterArea}&`;
-    if (filterPriority) url += `priority=${filterPriority}&`;
-    const res = await fetch(url);
-    const data = await res.json();
-    let list = data.success ? data.data : [];
-    if (filterStatus === 'active') list = list.filter(t => !['DONE', 'CANCELLED'].includes(t.status));
-    else if (filterStatus === 'done') list = list.filter(t => t.status === 'DONE');
-    setTasks(list);
-    setLoading(false);
+    const searchParams = new URLSearchParams();
+    if (filterArea) searchParams.set('area', filterArea);
+    if (filterPriority) searchParams.set('priority', filterPriority);
+
+    try {
+      const res = await fetch(`/api/tasks?${searchParams.toString()}`);
+      const data = await res.json();
+      let list = data.success ? data.data : [];
+      if (filterStatus === 'active') list = list.filter(t => !['DONE', 'CANCELLED'].includes(t.status));
+      else if (filterStatus === 'done') list = list.filter(t => t.status === 'DONE');
+      setTasks(list);
+    } catch {
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { load(); }, [filterArea, filterPriority, filterStatus]);
@@ -436,18 +442,30 @@ export default function TasksPage() {
       {/* Filters */}
       <div className="filter-row">
         {['active', 'done', 'all'].map(s => (
-          <button key={s} className={`filter-chip ${filterStatus === s ? 'active' : ''}`} onClick={() => setFilterStatus(s)}>
+          <button
+            key={s}
+            className={`filter-chip ${filterStatus === s ? 'active' : ''}`}
+            onClick={() => {
+              setFilterStatus(s);
+              if (s === 'all') {
+                setFilterArea('');
+                setFilterPriority('');
+              }
+            }}
+          >
             {s === 'active' ? 'Active' : s === 'done' ? '✓ Done' : 'All'}
           </button>
         ))}
         <div style={{ width: 1, background: 'var(--border)', margin: '0 4px', flexShrink: 0 }} />
+        <button className={`filter-chip ${!filterPriority ? 'active' : ''}`} onClick={() => setFilterPriority('')}>All priorities</button>
         {PRIORITIES.map(p => (
           <button key={p} className={`filter-chip ${filterPriority === p ? 'active' : ''}`} onClick={() => setFilterPriority(filterPriority === p ? '' : p)}>
             {p}
           </button>
         ))}
         <div style={{ width: 1, background: 'var(--border)', margin: '0 4px', flexShrink: 0 }} />
-        {AREAS.filter(Boolean).slice(0,5).map(a => (
+        <button className={`filter-chip ${!filterArea ? 'active' : ''}`} onClick={() => setFilterArea('')}>All areas</button>
+        {AREAS.filter(Boolean).map(a => (
           <button key={a} className={`filter-chip ${filterArea === a ? 'active' : ''}`} onClick={() => setFilterArea(filterArea === a ? '' : a)}>
             {a}
           </button>
