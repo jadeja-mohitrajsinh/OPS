@@ -1,11 +1,17 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export default function AppModal({ open, onClose, title, size = 'md', children, footer, closeOnBackdrop = true }) {
+  const [mounted, setMounted] = useState(false);
   const dialogRef = useRef(null);
   const previouslyFocusedRef = useRef(null);
   const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -40,8 +46,9 @@ export default function AppModal({ open, onClose, title, size = 'md', children, 
     };
   }, [open]);
 
-  if (!open) return null;
-  return (
+  if (!open || !mounted) return null;
+
+  return createPortal(
     <div className="app-modal-backdrop" onMouseDown={(event) => { if (closeOnBackdrop && event.target === event.currentTarget) onClose(); }}>
       <section ref={dialogRef} className={`app-modal app-modal-${size}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}>
         <header className="app-modal-header">
@@ -51,6 +58,8 @@ export default function AppModal({ open, onClose, title, size = 'md', children, 
         <div className="app-modal-body">{children}</div>
         {footer && <footer className="app-modal-footer">{footer}</footer>}
       </section>
-    </div>
+    </div>,
+    document.body
   );
 }
+

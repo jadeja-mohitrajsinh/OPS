@@ -66,9 +66,9 @@
   --z-sticky: 20;
   --z-menu: 50;
   --z-popover: 60;
-  --z-backdrop: 90;
-  --z-modal: 100;
-  --z-toast: 120;
+  --z-backdrop: 490;
+  --z-modal: 500;
+  --z-toast: 1200;
 }
 
 /* ─── Dark Theme ─────────────────────────────────────────────────── */
@@ -1296,7 +1296,14 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent) !importa
 @media (min-width: 768px) {
   .app-shell { padding-left: 232px; }
   .main-content { padding: 32px clamp(24px, 4vw, 56px) 48px; }
-  .main-content > * { position: relative; max-width: 1440px; }
+  .main-content > :not(.app-modal-backdrop):not(.modal-backdrop) { position: relative; max-width: 1440px; }
+  .main-content > .app-modal-backdrop,
+  .main-content > .modal-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    max-width: none !important;
+  }
   .quick-menu { left: 252px; }
 }
 @media (max-width: 767px) {
@@ -1414,15 +1421,30 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent) !importa
 
 /* Shared modal layering and compatibility for older modal-backdrop/modal-card forms. */
 .app-modal-backdrop, .modal-backdrop {
-  position: fixed;
-  inset: 0;
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  width: 100dvw !important;
+  min-width: 100vw !important;
+  max-width: none !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  max-height: none !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
   z-index: var(--z-modal);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   padding: 24px;
   background: rgba(0, 0, 0, .68);
   backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 .app-modal, .modal-card {
   width: min(520px, calc(100vw - 32px));

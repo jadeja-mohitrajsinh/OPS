@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import AppModal from '@/components/AppModal';
+import TaskJsonImportModal from '@/components/TaskJsonImportModal';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
 const AREAS = ['', 'Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'Forge', 'Learning', 'Health', 'Communication'];
@@ -194,6 +195,7 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState(null);
   const [filterArea, setFilterArea] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
@@ -435,6 +437,7 @@ export default function TasksPage() {
           )}
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <button className="btn btn-secondary btn-sm" onClick={() => setShowImport(true)}>📥 Import JSON</button>
           <button className="btn btn-primary btn-sm" onClick={() => { setEditing(null); setShowForm(true); }}>+ Add Task</button>
         </div>
       </div>
@@ -507,6 +510,11 @@ export default function TasksPage() {
         <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>Delete “{taskPendingDelete?.name}”? This cannot be undone.</p>
         {deleteError && <p style={{ color: 'var(--red)', fontSize: 13, marginTop: 12 }}>{deleteError}</p>}
       </AppModal>
+      <TaskJsonImportModal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        onSuccess={() => { load(); }}
+      />
     </AppShell>
   );
 }
