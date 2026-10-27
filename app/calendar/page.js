@@ -257,7 +257,7 @@ export default function CalendarPlanningPage() {
   const distributionData = [
     { label: 'GATE Study', hours: 14.5, color: '#3b82f6', icon: '🎓' },
     { label: 'College', hours: 12.0, color: '#f59e0b', icon: '🏛️' },
-    { label: 'Startup / Forge', hours: 10.0, color: '#ec4899', icon: '⚡' },
+    { label: 'Startup / anyrise', hours: 10.0, color: '#ec4899', icon: '⚡' },
     { label: 'Tasks & Projects', hours: 8.5, color: '#6366f1', icon: '✓' },
     { label: 'Meetings', hours: 4.0, color: '#2563eb', icon: '👥' },
     { label: 'Health & Habits', hours: 7.0, color: '#10b981', icon: '💪' },

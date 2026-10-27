@@ -268,7 +268,7 @@ export default function HomePage() {
                 { href: '/gsoc', label: 'GSoC 2027', sub: 'Proposal Tracker', bg: 'var(--purple-bg)', color: 'var(--purple)' },
                 { href: '/gate', label: 'GATE 2027', sub: `${gateDays}d left`, bg: 'var(--blue-bg)', color: 'var(--blue)' },
                 { href: '/college', label: 'College', sub: 'Mid 2 upcoming', bg: 'var(--green-bg)', color: 'var(--green)' },
-                { href: '/forge', label: 'Forge', sub: 'Startup OS', bg: 'var(--orange-bg)', color: 'var(--orange)' },
+                { href: '/anyrise', label: 'anyrise', sub: 'Startup OS', bg: 'var(--orange-bg)', color: 'var(--orange)' },
                 { href: '/meetings', label: 'Meetings', sub: `${upcomingMeetings.length} upcoming`, bg: 'var(--yellow-bg)', color: 'var(--yellow)' },
                 { href: '/reviews', label: 'Review', sub: 'Weekly CEO', bg: 'var(--red-bg)', color: 'var(--red)' },
               ].map(item => (

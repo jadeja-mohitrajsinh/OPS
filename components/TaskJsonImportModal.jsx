@@ -31,7 +31,7 @@ export const TASK_IMPORT_TEMPLATE = [
   {
     "name": "Prepare GSoC weekly status update",
     "priority": "P2",
-    "area": "Forge",
+    "area": "anyrise",
     "project": "GSoC 2027",
     "deadline": "2026-11-03",
     "estimatedDuration": 30,
@@ -55,7 +55,7 @@ Convert the user's tasks or schedule into a valid, strict JSON array conforming 
      - P2: Development / Medium
      - P3: Optional / Backlog
   3. "area": string (Optional, default: "")
-     Allowed values: "Academic", "Entrepreneur", "Personal", "GATE", "College", "Forge", "Learning", "Health", "Communication", or ""
+     Allowed values: "Academic", "Entrepreneur", "Personal", "GATE", "College", "anyrise", "Learning", "Health", "Communication", or ""
   4. "project": string (Optional, default: "") - name of parent project or goal.
   5. "deadline": string in YYYY-MM-DD format, or null (Optional).
   6. "estimatedDuration": number (in minutes, default: 30).
@@ -244,7 +244,7 @@ export default function TaskJsonImportModal({ open, onClose, onSuccess }) {
             className="input textarea"
             value={jsonText}
             onChange={(e) => { setJsonText(e.target.value); setError(''); }}
-            placeholder={`[\n  {\n    "name": "Complete feature X",\n    "priority": "P1",\n    "area": "Forge",\n    "deadline": "2026-11-01",\n    "estimatedDuration": 45,\n    "tags": ["feature", "ui"]\n  }\n]`}
+            placeholder={`[\n  {\n    "name": "Complete feature X",\n    "priority": "P1",\n    "area": "anyrise",\n    "deadline": "2026-11-01",\n    "estimatedDuration": 45,\n    "tags": ["feature", "ui"]\n  }\n]`}
             rows={10}
             style={{
               fontFamily: 'var(--font-mono, monospace)',

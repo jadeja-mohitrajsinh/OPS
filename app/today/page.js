@@ -16,7 +16,7 @@ const TYPE_CONFIG = {
   meeting:  { label: 'Meeting',  color: '#2563eb', bg: 'rgba(37,99,235,0.12)',   border: '#2563eb', icon: '👥' },
   gate:     { label: 'GATE',     color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  border: '#3b82f6', icon: '🎓' },
   college:  { label: 'College',  color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: '#f59e0b', icon: '🏛️' },
-  forge:    { label: 'Forge',    color: '#ec4899', bg: 'rgba(236,72,153,0.12)',  border: '#ec4899', icon: '⚡' },
+  anyrise:    { label: 'anyrise',    color: '#ec4899', bg: 'rgba(236,72,153,0.12)',  border: '#ec4899', icon: '⚡' },
   health:   { label: 'Training', color: '#ff4d43', bg: 'rgba(255,77,67,0.14)',   border: '#ff4d43', icon: '💪' },
   habit:    { label: 'Habit',    color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  border: '#8b5cf6', icon: '✨' },
   review:   { label: 'Review',   color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   border: '#ef4444', icon: '📊' },
@@ -1120,7 +1120,7 @@ export default function TodayExecutionPage() {
               <div
                 key={p._id}
                 draggable
-                onDragStart={(e) => handleSidebarDragStart(e, { title: getScheduleTitle(p), type: 'forge', duration: 120, color: '#ec4899' })}
+                onDragStart={(e) => handleSidebarDragStart(e, { title: getScheduleTitle(p), type: 'anyrise', duration: 120, color: '#ec4899' })}
                 className="schedule-drawer-item"
                 style={{
                   padding: '9px 12px',
@@ -1141,11 +1141,11 @@ export default function TodayExecutionPage() {
                     <span title={getScheduleTitle(p)}>{getScheduleTitle(p)}</span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, marginTop: 2, lineHeight: 1.25 }}>
-                    {getScheduleMetadata(p, 'Forge')}
+                    {getScheduleMetadata(p, 'anyrise')}
                   </div>
                 </div>
                 <button
-                  onClick={() => handleAddItemToHour({ title: getScheduleTitle(p), type: 'forge', duration: 120, color: '#ec4899' }, selectedHourForAdd)}
+                  onClick={() => handleAddItemToHour({ title: getScheduleTitle(p), type: 'anyrise', duration: 120, color: '#ec4899' }, selectedHourForAdd)}
                   style={{
                     background: 'var(--surface)',
                     color: 'var(--text-secondary)',
@@ -1490,11 +1490,11 @@ export default function TodayExecutionPage() {
                         <span title={getScheduleTitle(p)}>{getScheduleTitle(p)}</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                        {getScheduleMetadata(p, 'Forge')}
+                        {getScheduleMetadata(p, 'anyrise')}
                       </div>
                     </div>
                     <button
-                      onClick={() => handleAddItemToHour({ title: getScheduleTitle(p), type: 'forge', duration: 120, color: '#ec4899' }, selectedHourForAdd)}
+                      onClick={() => handleAddItemToHour({ title: getScheduleTitle(p), type: 'anyrise', duration: 120, color: '#ec4899' }, selectedHourForAdd)}
                       style={{
                         background: '#ec4899',
                         color: '#fff',

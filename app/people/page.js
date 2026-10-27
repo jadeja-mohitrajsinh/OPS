@@ -71,7 +71,7 @@ function PersonForm({ onSave, onClose, initial = {} }) {
             </div>
             <div className="form-group">
               <label className="label">Current Project</label>
-              <input className="input" value={form.currentProject} onChange={e => set('currentProject', e.target.value)} placeholder="Forge, College..." />
+              <input className="input" value={form.currentProject} onChange={e => set('currentProject', e.target.value)} placeholder="anyrise, College..." />
             </div>
           </div>
           <div className="form-group">

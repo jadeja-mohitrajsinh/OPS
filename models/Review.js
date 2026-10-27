@@ -13,10 +13,10 @@ const ReviewSchema = new mongoose.Schema({
     gateMastered: { type: String, default: '' },
     gateWeak: { type: String, default: '' },
     gateQuestions: { type: String, default: '' },
-    // Forge
-    forgeBuilt: { type: String, default: '' },
-    forgeLearned: { type: String, default: '' },
-    forgeDecision: { type: String, default: '' },
+    // anyrise
+    anyriseBuilt: { type: String, default: '' },
+    anyriseLearned: { type: String, default: '' },
+    anyriseDecision: { type: String, default: '' },
     // People
     peopleFollowUp: { type: String, default: '' },
     peopleWaiting: { type: String, default: '' },

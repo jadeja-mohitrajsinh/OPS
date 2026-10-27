@@ -10,7 +10,7 @@ const ProjectSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   name: { type: String, required: true },
   objective: { type: String, default: '' },
-  area: { type: String, enum: ['Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'Forge', 'Learning', ''], default: '' },
+  area: { type: String, enum: ['Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'anyrise', 'Learning', ''], default: '' },
   owner: { type: String, default: 'Me' },
   deadline: { type: Date },
   priority: { type: String, enum: ['P0', 'P1', 'P2', 'P3'], default: 'P1' },

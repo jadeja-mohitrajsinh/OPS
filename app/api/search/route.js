@@ -8,7 +8,7 @@ import Note from '@/models/Note';
 import Decision from '@/models/Decision';
 import GateSubject from '@/models/GateSubject';
 import CollegeSubject from '@/models/CollegeSubject';
-import ForgeResearch from '@/models/ForgeResearch';
+import anyriseResearch from '@/models/anyriseResearch';
 import Book from '@/models/Book';
 import Competitor from '@/models/Competitor';
 import GSoCSkill from '@/models/GSoCSkill';
@@ -29,7 +29,7 @@ export async function GET(request) {
 
     const regex = new RegExp(q, 'i');
 
-    const [tasks, meetings, people, projects, notes, decisions, gate, college, forge, books, competitors, gsocSkills, gsocProjects, gsocOrganizations, gsocContributions, gsocExperiments, gsocProposals] = await Promise.all([
+    const [tasks, meetings, people, projects, notes, decisions, gate, college, anyrise, books, competitors, gsocSkills, gsocProjects, gsocOrganizations, gsocContributions, gsocExperiments, gsocProposals] = await Promise.all([
       Task.find({ $or: [{ name: regex }, { notes: regex }, { tags: regex }] }).limit(5).lean(),
       Meeting.find({ $or: [{ title: regex }, { notes: regex }, { purpose: regex }] }).limit(5).lean(),
       Person.find({ $or: [{ name: regex }, { notes: regex }, { organization: regex }] }).limit(5).lean(),
@@ -38,7 +38,7 @@ export async function GET(request) {
       Decision.find({ $or: [{ decision: regex }, { context: regex }] }).limit(5).lean(),
       GateSubject.find({ name: regex }).limit(3).lean(),
       CollegeSubject.find({ name: regex }).limit(3).lean(),
-      ForgeResearch.find({ $or: [{ problem: regex }, { finding: regex }, { insight: regex }] }).limit(5).lean(),
+      anyriseResearch.find({ $or: [{ problem: regex }, { finding: regex }, { insight: regex }] }).limit(5).lean(),
       Book.find({ $or: [{ title: regex }, { author: regex }] }).limit(3).lean(),
       Competitor.find({ $or: [{ name: regex }, { tagline: regex }, { ourDifferentiator: regex }] }).limit(5).lean(),
       GSoCSkill.find({ $or: [{ name: regex }, { notes: regex }] }).limit(3).lean(),
@@ -58,7 +58,7 @@ export async function GET(request) {
       ...decisions.map(d => ({ ...d, _type: 'decision' })),
       ...gate.map(g => ({ ...g, _type: 'gate' })),
       ...college.map(c => ({ ...c, _type: 'college' })),
-      ...forge.map(f => ({ ...f, _type: 'forge' })),
+      ...anyrise.map(f => ({ ...f, _type: 'anyrise' })),
       ...books.map(b => ({ ...b, _type: 'book' })),
       ...competitors.map(c => ({ ...c, _type: 'competitor' })),
       ...gsocSkills.map(s => ({ ...s, _type: 'gsoc_skill' })),

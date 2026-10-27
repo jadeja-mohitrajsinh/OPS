@@ -20,7 +20,7 @@ const AREA_BADGES = {
   Personal: { color: 'var(--green)', bg: 'var(--green-bg)' },
   GATE: { color: 'var(--orange)', bg: 'var(--orange-bg)' },
   College: { color: 'var(--blue)', bg: 'var(--blue-bg)' },
-  Forge: { color: 'var(--purple)', bg: 'var(--purple-bg)' },
+  anyrise: { color: 'var(--purple)', bg: 'var(--purple-bg)' },
   Learning: { color: 'var(--yellow)', bg: 'var(--yellow-bg)' },
 };
 
@@ -41,7 +41,7 @@ export default function ProjectsPage() {
   const [newProject, setNewProject] = useState({
     name: '',
     objective: '',
-    area: 'Forge',
+    area: 'anyrise',
     owner: 'Me',
     deadline: '',
     priority: 'P1',
@@ -89,7 +89,7 @@ export default function ProjectsPage() {
       setNewProject({
         name: '',
         objective: '',
-        area: 'Forge',
+        area: 'anyrise',
         owner: 'Me',
         deadline: '',
         priority: 'P1',
@@ -140,7 +140,7 @@ export default function ProjectsPage() {
     return true;
   });
 
-  const areas = ['ALL', 'Forge', 'GATE', 'College', 'Learning', 'Personal', 'Entrepreneur'];
+  const areas = ['ALL', 'anyrise', 'GATE', 'College', 'Learning', 'Personal', 'Entrepreneur'];
   const activeCount = projects.filter(p => p.status === 'ACTIVE').length;
   const doneCount = projects.filter(p => p.status === 'DONE').length;
 
@@ -312,7 +312,7 @@ export default function ProjectsPage() {
                 <input
                   className="input"
                   required
-                  placeholder="e.g. Forge MVP Launch"
+                  placeholder="e.g. anyrise MVP Launch"
                   value={newProject.name}
                   onChange={e => setNewProject({ ...newProject, name: e.target.value })}
                 />
@@ -337,7 +337,7 @@ export default function ProjectsPage() {
                     value={newProject.area}
                     onChange={e => setNewProject({ ...newProject, area: e.target.value })}
                   >
-                    <option value="Forge">Forge (Startup)</option>
+                    <option value="anyrise">anyrise (Startup)</option>
                     <option value="GATE">GATE 2027</option>
                     <option value="College">College</option>
                     <option value="Learning">Learning & ML</option>

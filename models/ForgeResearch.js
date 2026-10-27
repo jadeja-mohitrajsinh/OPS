@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const ForgeResearchSchema = new mongoose.Schema({
+const anyriseResearchSchema = new mongoose.Schema({
   problem: { type: String, required: true },
   question: { type: String, default: '' },
   source: { type: String, default: '' },
@@ -13,4 +13,4 @@ const ForgeResearchSchema = new mongoose.Schema({
   tags: [{ type: String }],
 }, { timestamps: true });
 
-export default mongoose.models.ForgeResearch || mongoose.model('ForgeResearch', ForgeResearchSchema);
+export default mongoose.models.anyriseResearch || mongoose.model('anyriseResearch', anyriseResearchSchema);

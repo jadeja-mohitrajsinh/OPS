@@ -1,6 +1,6 @@
 # OPS — Entrepreneur & Student Operating System
 
-A high-performance, mobile-first personal operating system and management dashboard built for hyper-focused execution across academics (GATE 2027 + College), startup validation (Forge), technical learning (ML & Systems), leadership, and physical peak state.
+A high-performance, mobile-first personal operating system and management dashboard built for hyper-focused execution across academics (GATE 2027 + College), startup validation (anyrise), technical learning (ML & Systems), leadership, and physical peak state.
 
 ---
 
@@ -24,10 +24,10 @@ A high-performance, mobile-first personal operating system and management dashbo
 - Tracking for Mid 1 (Completed), upcoming Mid 2, Viva preparations, ongoing lab assignments, and semester finals.
 - Direct links to subjects, syllabus coverage, and submission deadlines.
 
-### 5. ⚡ Forge Startup Hub (`/forge`)
+### 5. ⚡ anyrise Startup Hub (`/anyrise`)
 - **Research & Discovery**: Startup hypotheses, discovery notes, stage pipeline (`RESEARCH` ➔ `INSIGHT` ➔ `DECISION` ➔ `ACTION` ➔ `DONE`), and multi-area filtering.
 - **Competitor Intelligence**: Dedicated competitor profiles, threat scoring (`CRITICAL` to `WATCHING`), direct/indirect categorizations, strengths, vulnerabilities, and pricing teardowns.
-- **Unfair Advantage & Moat Mapping**: Clear definition of why our solution wins over each rival, with 1-click conversion of rival weaknesses into exploitable Forge hypotheses.
+- **Unfair Advantage & Moat Mapping**: Clear definition of why our solution wins over each rival, with 1-click conversion of rival weaknesses into exploitable anyrise hypotheses.
 - **Feature Battle Matrix & Positioning**: Side-by-side capability scoring (`⭐ Superior`, `✅ Supported`, `⚠️ Partial`, `❌ Missing`) and 2x2 strategic quadrant mapping.
 
 ### 6. 🚀 Projects & Milestone Engine (`/projects`, `/projects/[id]`)

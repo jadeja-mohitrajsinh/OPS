@@ -49,7 +49,7 @@ export async function POST(request) {
         return NextResponse.json({ success: false, error: 'JSON array contains no tasks to import.' }, { status: 400 });
       }
 
-      const VALID_AREAS = ['Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'Forge', 'Learning', 'Health', 'Communication', ''];
+      const VALID_AREAS = ['Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'anyrise', 'Learning', 'Health', 'Communication', ''];
       const VALID_PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
       const VALID_STATUSES = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELLED'];
       const VALID_ENERGY = ['LOW', 'MEDIUM', 'HIGH'];

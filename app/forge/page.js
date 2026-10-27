@@ -43,7 +43,7 @@ const DEFAULT_FEATURE_KEYS = [
   'Academic & Startup Workflow'
 ];
 
-export default function ForgePage() {
+export default function anyrisePage() {
   const [activeTab, setActiveTab] = useState('research'); // 'research' | 'competitors' | 'matrix' | 'positioning'
 
   // Research State
@@ -102,7 +102,7 @@ export default function ForgePage() {
   // Data Fetching
   async function loadResearch() {
     try {
-      const res = await fetch('/api/forge');
+      const res = await fetch('/api/anyrise');
       const data = await res.json();
       if (data.success) {
         setItems(data.data || []);
@@ -145,13 +145,13 @@ export default function ForgePage() {
       };
 
       if (editingResearchItem) {
-        await fetch(`/api/forge/${editingResearchItem._id}`, {
+        await fetch(`/api/anyrise/${editingResearchItem._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
       } else {
-        await fetch('/api/forge', {
+        await fetch('/api/anyrise', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -184,7 +184,7 @@ export default function ForgePage() {
 
   async function handleStatusChange(id, status) {
     try {
-      await fetch(`/api/forge/${id}`, {
+      await fetch(`/api/anyrise/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -198,7 +198,7 @@ export default function ForgePage() {
   async function handleResearchDelete(id) {
     if (!confirm('Delete this research item?')) return;
     try {
-      await fetch(`/api/forge/${id}`, { method: 'DELETE' });
+      await fetch(`/api/anyrise/${id}`, { method: 'DELETE' });
       loadResearch();
     } catch (err) {
       console.error(err);
@@ -390,7 +390,7 @@ export default function ForgePage() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 24 }}>⚡</span>
-            <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px' }}>Forge Hub</h1>
+            <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px' }}>anyrise Hub</h1>
             <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 12, background: 'var(--surface-2)', color: 'var(--purple)' }}>
               VENTURE OS
             </span>
@@ -602,7 +602,7 @@ export default function ForgePage() {
             <div className="loading-state"><div className="spinner" /></div>
           ) : filteredResearch.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-title">No forge research items found</div>
+              <div className="empty-state-title">No anyrise research items found</div>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Capture your hypothesis, discovery, or startup experiment.</p>
             </div>
           ) : (
@@ -933,7 +933,7 @@ export default function ForgePage() {
                                   <span>{wk}</span>
                                 </div>
                                 <button
-                                  title="Turn into a Forge hypothesis"
+                                  title="Turn into a anyrise hypothesis"
                                   onClick={() => convertWeaknessToHypothesis(comp.name, wk)}
                                   style={{
                                     fontSize: 10,
@@ -1197,7 +1197,7 @@ export default function ForgePage() {
                 alignItems: 'center',
                 gap: 6
               }}>
-                <span>⚡</span> OPS / Forge
+                <span>⚡</span> OPS / anyrise
               </div>
 
               {/* Competitor Pins */}
@@ -1244,7 +1244,7 @@ export default function ForgePage() {
               <div style={{ background: 'var(--surface-2)', padding: 12, borderRadius: 8 }}>
                 <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--purple)', marginBottom: 4 }}>1. All-in-One Execution OS</div>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                  Competitors build isolated tools (issues only or chat only). Forge unifies venture hypotheses with academic mastery and daily life rituals.
+                  Competitors build isolated tools (issues only or chat only). anyrise unifies venture hypotheses with academic mastery and daily life rituals.
                 </p>
               </div>
 

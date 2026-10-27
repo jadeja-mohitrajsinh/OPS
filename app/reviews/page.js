@@ -17,7 +17,7 @@ export default function ReviewsPage() {
     optionsConsidered: '',
     reason: '',
     expectedResult: '',
-    area: 'Forge',
+    area: 'anyrise',
   });
 
   // Goal modal / form
@@ -43,9 +43,9 @@ export default function ReviewsPage() {
       gateMastered: '',
       gateWeak: '',
       gateQuestions: '',
-      forgeBuilt: '',
-      forgeLearned: '',
-      forgeDecision: '',
+      anyriseBuilt: '',
+      anyriseLearned: '',
+      anyriseDecision: '',
       peopleFollowUp: '',
       peopleWaiting: '',
       gymConsistency: '',
@@ -107,7 +107,7 @@ export default function ReviewsPage() {
         optionsConsidered: '',
         reason: '',
         expectedResult: '',
-        area: 'Forge',
+        area: 'anyrise',
       });
       loadAll();
     } catch (err) {
@@ -250,7 +250,7 @@ export default function ReviewsPage() {
               <div style={{ fontSize: 32, marginBottom: 8 }}>📝</div>
               <h3 style={{ fontSize: 16, fontWeight: 700 }}>Ready for this week&apos;s review?</h3>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '6px 0 16px 0' }}>
-                Weekly reviews ensure you never drift off course for GATE 2027 or Forge startup milestones.
+                Weekly reviews ensure you never drift off course for GATE 2027 or anyrise startup milestones.
               </p>
               <button className="btn btn-primary" onClick={() => setShowReviewModal(true)}>
                 Start Weekly Review
@@ -399,7 +399,7 @@ export default function ReviewsPage() {
           {goals.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-title">No goals defined</div>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Add your 90-day GATE 2027 and Forge milestone goals.</p>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Add your 90-day GATE 2027 and anyrise milestone goals.</p>
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 }}>
@@ -519,7 +519,7 @@ export default function ReviewsPage() {
                 <label className="label">Next Week&apos;s Non-Negotiable #2 (MUST)</label>
                 <input
                   className="input"
-                  placeholder="Complete Forge core API deployment"
+                  placeholder="Complete anyrise core API deployment"
                   value={reviewForm.nextWeekOutcomes[1].title}
                   onChange={e => {
                     const copy = [...reviewForm.nextWeekOutcomes];
@@ -565,7 +565,7 @@ export default function ReviewsPage() {
                   value={decisionForm.area}
                   onChange={e => setDecisionForm({ ...decisionForm, area: e.target.value })}
                 >
-                  <option value="Forge">Forge (Startup)</option>
+                  <option value="anyrise">anyrise (Startup)</option>
                   <option value="GATE">GATE 2027</option>
                   <option value="College">College</option>
                   <option value="Career">Career & ML</option>

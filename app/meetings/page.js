@@ -242,7 +242,7 @@ function MeetingForm({ onSave, onClose, initial = {}, availablePeople = [] }) {
           <div className="form-row">
             <div className="form-group">
               <label className="label">Organization / Project</label>
-              <input className="input" value={form.organization} onChange={e => set('organization', e.target.value)} placeholder="Forge, College..." />
+              <input className="input" value={form.organization} onChange={e => set('organization', e.target.value)} placeholder="anyrise, College..." />
             </div>
             <div className="form-group">
               <label className="label">Status</label>

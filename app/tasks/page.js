@@ -5,7 +5,7 @@ import AppModal from '@/components/AppModal';
 import TaskJsonImportModal from '@/components/TaskJsonImportModal';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
-const AREAS = ['', 'Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'Forge', 'Learning', 'Health', 'Communication'];
+const AREAS = ['', 'Academic', 'Entrepreneur', 'Personal', 'GATE', 'College', 'anyrise', 'Learning', 'Health', 'Communication'];
 const PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
 const STATUSES = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELLED'];
 const ENERGY = ['LOW', 'MEDIUM', 'HIGH'];
